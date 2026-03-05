@@ -1,9 +1,9 @@
 # 🧠 Noties Workspace
 > **v0.0.1-alpha** | Mi "Segundo Cerebro" para la Universidad.
 
-**Noties** es una aplicación de escritorio diseñada para estudiantes que necesitan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, Noties centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
+**Noties** es una aplicación de escritorio diseñada para estudiantes que buscan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, Noties centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
 
-
+🔗 **Repositorio:** [https://github.com/Carlos-Gan/Noties](https://github.com/Carlos-Gan/Noties)
 
 ---
 
@@ -24,8 +24,6 @@
 * **Base de Datos:** SQLite (vía `better-sqlite3`)
 * **Animaciones:** Framer Motion
 
-
-
 ---
 
 ## 🚀 Instalación y Desarrollo
@@ -37,8 +35,8 @@
 ### Configuración
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/tu-usuario/noties-workspace.git](https://github.com/tu-usuario/noties-workspace.git)
-    cd noties-workspace
+    git clone [https://github.com/Carlos-Gan/Noties.git](https://github.com/Carlos-Gan/Noties.git)
+    cd Noties
     ```
 2.  **Instalar dependencias:**
     ```bash
@@ -71,7 +69,7 @@ La aplicación utiliza un enfoque de **Esquema Flexible**:
 ---
 
 ## 👤 Autor
-**Carlos** - *Desarrollador y Estudiante*
+**Carlos-Gandara** - *Desarrollador y Estudiante*
 > "Construyendo las herramientas que desearía haber tenido el primer día de clases."
 
 ---
