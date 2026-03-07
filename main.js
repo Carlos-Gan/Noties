@@ -510,3 +510,26 @@ ipcMain.handle("config:set", (_, clave, valor) => {
   saveConfig(config);
   return true;
 });
+
+// main.js
+ipcMain.handle('dashboard:getResumen', () => {
+  ensureDb();
+  // Traemos notas con el nombre de su materia
+  const notas = db.prepare(`
+    SELECT a.*, m.nombre as materia_nombre 
+    FROM apuntes a 
+    JOIN materias m ON a.materia_id = m.id 
+    ORDER BY a.updated_at DESC LIMIT 8
+  `).all();
+
+  // Traemos tareas pendientes (ojo: tu tabla se llama 'tareas', no 'pendientes')
+  const tareas = db.prepare(`
+    SELECT t.*, m.nombre as materia_nombre 
+    FROM tareas t 
+    JOIN materias m ON t.materia_id = m.id 
+    WHERE t.completada = 0 
+    ORDER BY t.fecha_limite ASC LIMIT 5
+  `).all();
+
+  return { notas, tareas };
+});
