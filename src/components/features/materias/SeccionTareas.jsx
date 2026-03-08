@@ -33,6 +33,9 @@ const SeccionTareas = ({ materia, materias }) => {
   const [tareas, setTareas] = useState([]);
   const [filtro, setFiltro] = useState("Todas");
   const [modalOpen, setModalOpen] = useState(false);
+  const [menuContextual, setMenuContextual] = useState(null); // { x: 0, y: 0, tareaId: null }
+  const [editandoTarea, setEditandoTarea] = useState(null); // Tarea que se va a editar
+  const [tareaAEditar, setTareaAEditar] = useState(null);
 
   const cargarTareas = async () => {
     const data = await window.electron.invoke(
@@ -72,6 +75,41 @@ const SeccionTareas = ({ materia, materias }) => {
     cargarTareas();
   };
 
+  const handleContextMenu = (e, tarea) => {
+    e.preventDefault(); // Bloquea el menú normal
+    setMenuContextual({
+      x: e.pageX,
+      y: e.pageY,
+      tarea: tarea,
+    });
+  };
+
+  const handleGuardar = async (datos) => {
+    if (tareaAEditar) {
+      // Lógica para actualizar (puedes crear este invoke en tu main de Electron)
+      await window.electron.invoke("tareas:actualizar", {
+        ...datos,
+        id: tareaAEditar.id,
+      });
+    } else {
+      // Tu lógica actual de crear
+      await window.electron.invoke("tareas:crear", {
+        ...datos,
+        materia_id: materia.id,
+        proyecto_id: null,
+      });
+    }
+    setTareaAEditar(null); // Limpiamos después de guardar
+    cargarTareas();
+  };
+
+  // Función para cerrar el menú al hacer clic fuera
+  useEffect(() => {
+    const cerrarMenu = () => setMenuContextual(null);
+    window.addEventListener("click", cerrarMenu);
+    return () => window.removeEventListener("click", cerrarMenu);
+  }, []);
+
   const tareasFiltradas = useMemo(() => {
     return tareas.filter((t) => {
       if (filtro === "Todas") return true;
@@ -101,7 +139,10 @@ const SeccionTareas = ({ materia, materias }) => {
           </h2>
         </div>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            setTareaAEditar(null); // Nos aseguramos de limpiar cualquier tarea que se estuviera editando
+            setModalOpen(true)}
+          }
           className="px-3 py-1.5 bg-orange-500 hover:bg-orange-400 rounded-xl text-xs font-bold transition-all"
         >
           + Nueva
@@ -148,6 +189,7 @@ const SeccionTareas = ({ materia, materias }) => {
               return (
                 <div
                   key={tarea.id}
+                  onContextMenu={(e) => handleContextMenu(e, tarea)}
                   className="flex items-start gap-3 p-3 bg-white/[0.02] rounded-xl border border-white/5 hover:border-white/10 transition-all"
                 >
                   <button
@@ -190,13 +232,47 @@ const SeccionTareas = ({ materia, materias }) => {
               );
             })
         )}
+        {menuContextual && (
+          <div
+            className="fixed z-50 bg-[#1a1a1a] border border-white/10 shadow-2xl rounded-lg py-1 w-40 overflow-hidden"
+            style={{ top: menuContextual.y, left: menuContextual.x }}
+          > 
+            <button
+              onClick={() => {
+                setTareaAEditar(menuContextual.tarea); // Guardamos la tarea a editar
+                setModalOpen(true); // Reutilizamos tu modal
+                setMenuContextual(null); // Cerramos el menú
+              }}
+              className="w-full text-left px-4 py-2 text-xs font-bold text-gray-300 hover:bg-orange-500 hover:text-white transition-colors flex items-center gap-2"
+            >
+              ✏️ Editar tarea
+            </button>
+            <button
+              onClick={async () => {
+                // Aquí podrías llamar a una función de borrar
+                await window.electron.invoke(
+                  "tareas:eliminar",
+                  menuContextual.tarea.id,
+                );
+                cargarTareas();
+              }}
+              className="w-full text-left px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors flex items-center gap-2"
+            >
+              🗑️ Eliminar
+            </button>
+          </div>
+        )}
       </div>
 
       <ModalNuevaTarea
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleCrear}
+        onClose={() => {
+          setModalOpen(false);
+          setTareaAEditar(null); // Limpiamos la tarea a editar al cerrar
+        }}
+        onSave={handleGuardar}
         materias={materias}
+        tarea={tareaAEditar} // Pasamos la tarea a editar (si es que hay)
         fechaInicial={null}
       />
     </div>

@@ -50,11 +50,30 @@ const SeccionProyectos = ({ materia }) => {
     cargarProyectos();
   };
 
-  const cambiarEstado = async (id, estado) => {
-    await window.electron.invoke("proyectos:actualizar", { id, estado });
-    setProyectos((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, estado } : p)),
-    );
+  const cambiarEstado = async (id, nuevoEstado) => {
+    // 1. Buscamos el proyecto actual para no perder sus datos (evita error de NOT NULL)
+    const proyectoActual = proyectos.find((p) => p.id === id);
+    if (!proyectoActual || proyectoActual.estado === nuevoEstado) return;
+
+    // 2. Preparamos el objeto completo
+    const datosActualizados = {
+      ...proyectoActual,
+      estado: nuevoEstado,
+    };
+
+    try {
+      // 3. Invocamos el canal de actualización
+      await window.electron.invoke("proyectos:actualizar", datosActualizados);
+
+      // 4. Actualizamos el estado local para que la UI responda al instante
+      setProyectos((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, estado: nuevoEstado } : p)),
+      );
+    } catch (error) {
+      console.error("Error al actualizar estado:", error);
+      // Opcional: recargar para sincronizar si hubo error
+      cargarProyectos();
+    }
   };
 
   return (

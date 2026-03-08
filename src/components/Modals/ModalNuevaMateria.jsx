@@ -1,24 +1,24 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 
 const MultiSelectDays = ({ value, onChange }) => {
-  const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
   return (
     <div className="flex flex-wrap gap-2 mt-2">
-      {dias.map(dia => (
+      {dias.map((dia) => (
         <button
           key={dia}
           type="button"
           onClick={() => {
             const newValue = value.includes(dia)
-              ? value.filter(d => d !== dia)
+              ? value.filter((d) => d !== dia)
               : [...value, dia];
             onChange(newValue);
           }}
           className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
             value.includes(dia)
-              ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40'
-              : 'bg-[#1e1e1e] border-white/5 text-gray-500 hover:border-white/20'
+              ? "bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40"
+              : "bg-[#1e1e1e] border-white/5 text-gray-500 hover:border-white/20"
           }`}
         >
           {dia}
@@ -28,23 +28,43 @@ const MultiSelectDays = ({ value, onChange }) => {
   );
 };
 
-const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
-  const [nombre, setNombre] = useState('');
+const ModalNuevaMateria = ({
+  isOpen,
+  onClose,
+  onSave,
+  tarea = null,
+  plantilla = [],
+}) => {
+  const [nombre, setNombre] = useState("");
   const [fields, setFields] = useState([]);
+  // Si tienes otros estados como prioridad o fecha, agrégalos aquí
+  const [prioridad, setPrioridad] = useState("media");
+  const [fechaLimite, setFechaLimite] = useState("");
+  const [descripcion, setDescripcion] = useState("");
 
-  // Sincronizar con plantillaGlobal cada vez que abre
   useEffect(() => {
     if (isOpen) {
-      setNombre('');
-      setFields(plantilla.map(f => ({
-        ...f,
-        value: Array.isArray(f.value) ? [] : ''
-      })));
+      if (tarea) {
+        // MODO EDICIÓN: Rellenamos con lo que viene en la tarea
+        setNombre(tarea.nombre || "");
+        setDescripcion(tarea.descripcion || "");
+        setPrioridad(tarea.prioridad || "media");
+        setFechaLimite(tarea.fecha_limite || "");
+        // Si usas el sistema de fields dinámicos, aquí los mapearías
+        setFields(tarea.fields || plantilla);
+      } else {
+        // MODO NUEVO: Limpiamos todo
+        setNombre("");
+        setDescripcion("");
+        setPrioridad("media");
+        setFechaLimite("");
+        setFields(plantilla);
+      }
     }
-  }, [isOpen, plantilla]);
+  }, [tarea, isOpen, plantilla]);
 
   const updateField = (id, newValue) => {
-    setFields(fields.map(f => f.id === id ? { ...f, value: newValue } : f));
+    setFields(fields.map((f) => (f.id === id ? { ...f, value: newValue } : f)));
   };
 
   return (
@@ -52,11 +72,16 @@ const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
           />
           <motion.div
-            initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+            initial={{ scale: 0.9, y: 30 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 30 }}
             className="bg-[#242424] w-full max-w-lg rounded-[32px] border border-white/10 p-10 relative shadow-2xl overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600" />
@@ -82,7 +107,10 @@ const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
 
               <div className="grid grid-cols-1 gap-4">
                 {fields.map((field) => (
-                  <div key={field.id} className="bg-[#1e1e1e]/40 p-4 rounded-2xl border border-white/5">
+                  <div
+                    key={field.id}
+                    className="bg-[#1e1e1e]/40 p-4 rounded-2xl border border-white/5"
+                  >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs grayscale">{field.icon}</span>
                       <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
@@ -90,7 +118,7 @@ const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
                       </label>
                     </div>
 
-                    {field.type === 'text' && (
+                    {field.type === "text" && (
                       <input
                         className="bg-transparent w-full text-sm text-gray-200 outline-none mt-1"
                         placeholder="Escribir..."
@@ -99,7 +127,7 @@ const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
                       />
                     )}
 
-                    {field.type === 'number' && (
+                    {field.type === "number" && (
                       <input
                         type="number"
                         className="bg-transparent w-full text-sm text-gray-200 outline-none mt-1"
@@ -108,22 +136,30 @@ const ModalNuevaMateria = ({ isOpen, onClose, onSave, plantilla = [] }) => {
                       />
                     )}
 
-                    {field.type === 'multi-select' && (
+                    {field.type === "multi-select" && (
                       <MultiSelectDays
                         value={field.value}
                         onChange={(val) => updateField(field.id, val)}
                       />
                     )}
 
-                    {field.type === 'select' && (
+                    {field.type === "select" && (
                       <select
                         className="bg-transparent w-full text-sm text-gray-300 outline-none mt-1 cursor-pointer"
                         value={field.value}
                         onChange={(e) => updateField(field.id, e.target.value)}
                       >
-                        <option value="" className="bg-[#242424]">Seleccionar...</option>
-                        {field.options?.map(opt => (
-                          <option key={opt} value={opt} className="bg-[#242424]">{opt}</option>
+                        <option value="" className="bg-[#242424]">
+                          Seleccionar...
+                        </option>
+                        {field.options?.map((opt) => (
+                          <option
+                            key={opt}
+                            value={opt}
+                            className="bg-[#242424]"
+                          >
+                            {opt}
+                          </option>
                         ))}
                       </select>
                     )}

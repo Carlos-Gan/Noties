@@ -11,6 +11,7 @@ import ClasesAgregadasView from "./components/features/materias/ClasesView";
 import { useAppLogic } from "./hooks/useAppLogic";
 import ModalSettings from "./components/Modals/ModalSettings";
 import TareasView from "./components/features/tareas/TareasView";
+import ProyectoDashboard from "./components/features/proyectos/DashboardProyectos";
 
 function App() {
   // Encapsulamos toda la lógica en un solo objeto
@@ -78,6 +79,11 @@ function App() {
           {/* Tareas */}
           {Logic.view.type === "tasks" && (
             <TareasView key="tasks" materias={Logic.materias} />
+          )}
+
+          {/* Proyectos */}
+          {Logic.view.type === "projects" && (
+            <ProyectoDashboard key="projects" materias={Logic.materias} />
           )}
 
           {/* Vista de detalle de materia */}

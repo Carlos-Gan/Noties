@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const MESES = [
   "Enero",
@@ -22,28 +22,47 @@ const ModalNuevaTarea = ({
   onSave,
   materias = [],
   fechaInicial = null,
+  tarea = null, // Propiedad vital para saber si estamos editando
 }) => {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [prioridad, setPrioridad] = useState("media");
-  const [materiaId, setMateriaId] = useState(materias[0]?.id || "");
-  const [fecha, setFecha] = useState(
-    fechaInicial ? fechaInicial.toISOString().split("T")[0] : "",
-  );
+  const [materiaId, setMateriaId] = useState("");
+  const [fecha, setFecha] = useState("");
+
+  // Sincronizar el estado interno con la tarea recibida para editar
+  useEffect(() => {
+    if (isOpen) {
+      if (tarea) {
+        // Si hay una tarea (Modo Edición), rellenamos los campos
+        setNombre(tarea.nombre || "");
+        setDescripcion(tarea.descripcion || "");
+        setPrioridad(tarea.prioridad || "media");
+        setMateriaId(tarea.materia_id || materias[0]?.id || "");
+        setFecha(tarea.fecha_limite || "");
+      } else {
+        // Si no hay tarea (Modo Nuevo), reseteamos los campos
+        setNombre("");
+        setDescripcion("");
+        setPrioridad("media");
+        setMateriaId(materias[0]?.id || "");
+        setFecha(fechaInicial ? fechaInicial.toISOString().split("T")[0] : "");
+      }
+    }
+  }, [tarea, isOpen, fechaInicial, materias]);
 
   const handleSave = async () => {
     if (!nombre.trim() || !materiaId) return;
+
+    // Enviamos los datos al padre (SeccionTareas)
     await onSave({
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
       prioridad,
-      materia_id: materiaId,
+      materia_id: Number(materiaId),
       fecha_limite: fecha || null,
     });
-    setNombre("");
-    setDescripcion("");
-    setPrioridad("media");
-    setFecha("");
+
     onClose();
   };
 
@@ -71,12 +90,15 @@ const ModalNuevaTarea = ({
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-pink-600 rounded-t-[32px]" />
 
             <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-3">
-              <span className="bg-white/5 p-2 rounded-xl">✅</span>
-              Nueva Tarea
+              <span className="bg-white/5 p-2 rounded-xl">
+                {tarea ? "✏️" : "✅"}
+              </span>
+              {tarea ? "Editar Tarea" : "Nueva Tarea"}
             </h2>
-            {fechaLabel && (
+
+            {fechaLabel && !tarea && (
               <p className="text-xs text-orange-400 font-bold ml-1 mb-6">
-                📅 {fechaLabel}
+                📅 Para el {fechaLabel}
               </p>
             )}
             {!fechaLabel && <div className="mb-6" />}
@@ -110,8 +132,8 @@ const ModalNuevaTarea = ({
                 />
               </div>
 
-              {/* Materia y prioridad en fila */}
               <div className="grid grid-cols-2 gap-3">
+                {/* Materia */}
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-gray-500 font-black ml-1">
                     Materia
@@ -119,8 +141,11 @@ const ModalNuevaTarea = ({
                   <select
                     className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-3 mt-2 text-white text-sm outline-none cursor-pointer"
                     value={materiaId}
-                    onChange={(e) => setMateriaId(Number(e.target.value))}
+                    onChange={(e) => setMateriaId(e.target.value)}
                   >
+                    <option value="" disabled>
+                      Selecciona...
+                    </option>
                     {materias.map((m) => (
                       <option key={m.id} value={m.id} className="bg-[#242424]">
                         {m.nombre}
@@ -129,6 +154,7 @@ const ModalNuevaTarea = ({
                   </select>
                 </div>
 
+                {/* Prioridad */}
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-gray-500 font-black ml-1">
                     Prioridad
@@ -141,10 +167,11 @@ const ModalNuevaTarea = ({
                     ].map(({ val, icon }) => (
                       <button
                         key={val}
+                        type="button"
                         onClick={() => setPrioridad(val)}
                         className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                           prioridad === val
-                            ? "bg-white/10 border-white/20 text-white"
+                            ? "bg-white/10 border-white/20 text-white shadow-inner"
                             : "border-white/5 text-gray-600 hover:border-white/10"
                         }`}
                       >
@@ -182,7 +209,7 @@ const ModalNuevaTarea = ({
                 disabled={!nombre.trim() || !materiaId}
                 className="flex-1 py-3 rounded-2xl bg-orange-500 text-white hover:bg-orange-400 transition-all font-bold shadow-xl shadow-orange-900/30 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Crear Tarea
+                {tarea ? "Guardar Cambios" : "Crear Tarea"}
               </button>
             </div>
           </motion.div>
