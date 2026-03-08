@@ -3,7 +3,13 @@
 @layer base {
   body {
     @apply antialiased text-slate-200;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -24,19 +30,85 @@
 /* Estilos del editor TipTap */
 .ProseMirror {
   outline: none;
-  min-height: 100%;
+  min-height: 500px;
+  font-size: 16px;
+  line-height: 1.7;
 }
 
+.ProseMirror p {
+  margin: 0.6rem 0;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ProseMirror ul {
+  list-style: disc;
+  padding-left: 1.4rem;
+}
+
+/* El contenedor del cuadro de código */
 .ProseMirror pre {
-  background: #2d2d2d;
-  border-radius: 6px;
-  padding: 1rem;
-  font-family: 'Fira Code', monospace;
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  position: relative;
 }
 
-.ProseMirror code {
-  background: #2d2d2d;
-  border-radius: 3px;
-  padding: 0.1em 0.3em;
-  font-size: 0.9em;
+/* El texto dentro del cuadro */
+.ProseMirror pre code {
+  background: none !important;
+  color: #e0e0e0 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.6;
+  padding: 0 !important;
 }
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.1);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #a1a1aa;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 2rem 0;
+}
+
+/* Colores de resaltado para tus tareas de Ingeniería */
+.hljs-keyword {
+  color: #569cd6;
+} /* if, while, select */
+.hljs-string {
+  color: #ce9178;
+} /* "texto" */
+.hljs-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+.hljs-number {
+  color: #b5cea8;
+} /* 12345 */
+.hljs-function {
+  color: #dcdcaa;
+} /* miFuncion() */
+.hljs-title {
+  color: #4ec9b0;
+} /* Clases */

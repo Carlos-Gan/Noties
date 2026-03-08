@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import SeccionProyectos from "./SeccionProyectos";
+import SeccionProyectos from "../proyectos/SeccionProyectos";
 
 const ClasesAgregadasView = ({
   materias = [],
   resumen = { notas: [], proyectos: [] },
-  onMateriaClick,
+  onMateriaClick, // Esta ya la usas para las clases
 }) => {
   const [filtroMateria, setFiltroMateria] = useState("Todas");
 
@@ -13,6 +13,18 @@ const ClasesAgregadasView = ({
     if (!fecha) return "Sin fecha";
     const d = new Date(fecha);
     return isNaN(d) ? "Sin fecha" : d.toLocaleDateString();
+  };
+
+  // Función para abrir una nota específica
+  const handleNotaClick = (nota) => {
+    // Buscamos el objeto materia completo usando el id de la nota
+    const materiaCompleta = materias.find(m => m.id === nota.materia_id);
+    
+    if (materiaCompleta) {
+      // Navegamos a la vista de detalle pasando la materia
+      // El componente MateriaDetalle se encargará de cargar esta nota por su ID
+      onMateriaClick?.(materiaCompleta);
+    }
   };
 
   return (
@@ -65,13 +77,20 @@ const ClasesAgregadasView = ({
             {resumen.notas.map((nota) => (
               <div
                 key={nota.id}
-                className="grid grid-cols-12 px-4 py-3 rounded-xl hover:bg-white/[0.02] cursor-pointer group border-b border-white/[0.01]"
+                // CORRECCIÓN: Ahora al dar clic busca la materia y abre el editor
+                onClick={() => handleNotaClick(nota)}
+                className="grid grid-cols-12 px-4 py-3 rounded-xl hover:bg-white/[0.02] cursor-pointer group border-b border-white/[0.01] transition-colors"
               >
-                <div className="col-span-7 text-sm text-gray-300 group-hover:text-white font-medium">
-                  {nota.titulo}
+                <div className="col-span-7 text-sm text-gray-300 group-hover:text-white font-medium flex items-center gap-3">
+                  <span className="opacity-30 group-hover:opacity-100 transition-opacity">📝</span>
+                  {nota.titulo || "Sin título"}
                 </div>
-                <div className="col-span-5 text-right text-[11px] text-gray-500 font-bold self-center uppercase">
-                  {nota.materia_nombre} • {formatFecha(nota.updated_at)}
+                <div className="col-span-5 text-right text-[11px] text-gray-500 font-bold self-center uppercase tracking-tighter">
+                  <span className="text-blue-500/50 group-hover:text-blue-500 transition-colors">
+                    {nota.materia_nombre}
+                  </span> 
+                  <span className="mx-2 text-white/5">•</span> 
+                  {formatFecha(nota.updated_at)}
                 </div>
               </div>
             ))}

@@ -1,5 +1,32 @@
 import { useState, useEffect } from "react";
 
+// ─── Fuera del hook ───────────────────────────────────
+const generarHoras = (formato) => {
+  if (formato === "24h") {
+    return Array.from({ length: 15 }, (_, i) => {
+      const hora = i + 7;
+      return `${hora.toString().padStart(2, "0")}:00`;
+    });
+  }
+  return [
+    "7:00 AM",
+    "8:00 AM",
+    "9:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "1:00 PM",
+    "2:00 PM",
+    "3:00 PM",
+    "4:00 PM",
+    "5:00 PM",
+    "6:00 PM",
+    "7:00 PM",
+    "8:00 PM",
+    "9:00 PM",
+  ];
+};
+
 export function useAppLogic() {
   const [vaultListo, setVaultListo] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -11,11 +38,12 @@ export function useAppLogic() {
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [pidioNombre, setPidioNombre] = useState(false);
   const [view, setView] = useState({ type: "dashboard", data: null });
-
   const [filtroMateria, setFiltroMateria] = useState("Todas");
   const [filtroUnidad, setFiltroUnidad] = useState("Todas");
-
   const [resumenGlobal, setResumenGlobal] = useState({ notas: [], tareas: [] });
+  const [formatoHora, setFormatoHora] = useState("12h"); // ← nuevo
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [todasLasNotas, setTodasLasNotas] = useState([]);
 
   const [plantillaGlobal, setPlantillaGlobal] = useState([
     { id: "prof", label: "Profesor", type: "text", value: "", icon: "👨‍🏫" },
@@ -30,7 +58,7 @@ export function useAppLogic() {
       id: "hora",
       label: "Horario",
       type: "select",
-      options: ["7:00 AM", "9:00 AM"],
+      options: generarHoras("12h"),
       value: "",
       icon: "⏰",
     },
@@ -54,31 +82,55 @@ export function useAppLogic() {
     Clases: { color: "bg-green-600", icon: "📚" },
   });
 
-  // --- Funciones de Carga ---
+  // ─── Cambiar formato hora ─────────────────────────────
+  const cambiarFormatoHora = async (formato) => {
+    setFormatoHora(formato);
+    await window.electron.invoke("config:set", "formato_hora", formato);
+    setPlantillaGlobal((prev) =>
+      prev.map((f) =>
+        f.id === "hora" ? { ...f, options: generarHoras(formato) } : f,
+      ),
+    );
+  };
+
   const cargarMaterias = async () => {
     try {
       const data = await window.electron.invoke("materias:getAll");
       setMaterias(data);
-
       const tareas = {};
       const proyectos = {};
+      let notasAcumuladas = [];
+
       for (const m of data) {
         tareas[m.id] = await window.electron.invoke("tareas:getSueltas", m.id);
         proyectos[m.id] = await window.electron.invoke(
           "proyectos:getByMateria",
           m.id,
         );
+        const notasDeMateria = await window.electron.invoke(
+          "apuntes:getByMateria",
+          m.id,
+        );
+        notasAcumuladas = [...notasAcumuladas, ...notasDeMateria];
       }
       setTareasPorMateria(tareas);
       setProyectosPorMateria(proyectos);
+      setTodasLasNotas(notasAcumuladas);
     } catch (error) {
       console.error("Error cargando materias:", error);
     }
   };
 
-  const navigateTo = (type, data = null) => {
+  // Agregamos selectedNotaId como tercer parámetro opcional
+  const navigateTo = (type, data = null, selectedNotaId = null) => {
     if (type === "clases") cargarResumenGlobal();
-    setView({ type, data });
+
+    // Guardamos el tipo de vista, la data de la materia y el ID de la nota
+    setView({
+      type,
+      data,
+      selectedNotaId,
+    });
   };
 
   const cambiarColorSeccion = (seccion, nuevoColor) => {
@@ -92,20 +144,17 @@ export function useAppLogic() {
     setPlantillaGlobal([...plantillaGlobal, nuevoCampo]);
   };
 
-  // --- Nuevo Handler para el Modal de Nombre ---
   const guardarNombreUsuario = async (nombre) => {
     await window.electron.invoke("config:set", "nombre_usuario", nombre);
     setNombreUsuario(nombre);
     setPidioNombre(false);
   };
 
-  // --- Handlers ---
   const handleGuardarMateria = async ({ nombre, fields }) => {
     const metadata = {};
     fields.forEach((f) => {
       metadata[f.id] = f.value;
     });
-
     await window.electron.invoke("materias:crear", {
       nombre: nombre || "Nueva Materia",
       color: "#3b82f6",
@@ -122,11 +171,8 @@ export function useAppLogic() {
     setResumenGlobal(res);
   };
 
-  // Función para obtener proyectos filtrados
   const getProyectosFiltrados = () => {
-    // Convertimos el objeto tareasPorMateria o proyectosPorMateria en un array plano
     const todosLosProyectos = Object.values(proyectosPorMateria).flat();
-
     return todosLosProyectos.filter((proyecto) => {
       const coincideMateria =
         filtroMateria === "Todas" || proyecto.materia_nombre === filtroMateria;
@@ -136,7 +182,7 @@ export function useAppLogic() {
     });
   };
 
-  // --- Efectos ---
+  // ─── Efectos ──────────────────────────────────────────
   useEffect(() => {
     const checkVault = async () => {
       try {
@@ -150,7 +196,6 @@ export function useAppLogic() {
         const vaultPath = await window.electron.invoke("vault:check");
         if (vaultPath) {
           setVaultListo(true);
-          // Si hay vault, intentamos obtener el nombre
           const nombre = await window.electron.invoke(
             "config:get",
             "nombre_usuario",
@@ -160,9 +205,25 @@ export function useAppLogic() {
             setPidioNombre(false);
           } else {
             setNombreUsuario("");
-            setPidioNombre(true); // <--- Esto activará el Modal del nombre
+            setPidioNombre(true);
           }
-        } else setVaultListo(false);
+
+          // ← Cargar formato hora guardado
+          const formato = await window.electron.invoke(
+            "config:get",
+            "formato_hora",
+          );
+          if (formato) {
+            setFormatoHora(formato);
+            setPlantillaGlobal((prev) =>
+              prev.map((f) =>
+                f.id === "hora" ? { ...f, options: generarHoras(formato) } : f,
+              ),
+            );
+          }
+        } else {
+          setVaultListo(false);
+        }
       } catch (error) {
         console.error("Error checking vault:", error);
         setVaultListo(false);
@@ -178,7 +239,6 @@ export function useAppLogic() {
   }, [vaultListo, pidioNombre]);
 
   return {
-    // Estados de conexion y Datos
     vaultListo,
     setVaultListo,
     nombreUsuario,
@@ -186,15 +246,11 @@ export function useAppLogic() {
     materias,
     tareasPorMateria,
     proyectosPorMateria,
-
-    //Navegacion y Vistas
     view,
     navigateTo,
     configSecciones,
     cambiarColorSeccion,
     resumenGlobal,
-
-    //Control de Modales/UI
     isSearchOpen,
     setIsSearchOpen,
     isAdminOpen,
@@ -202,18 +258,20 @@ export function useAppLogic() {
     isModalOpen,
     setModalOpen,
     plantillaGlobal,
-
-    //Handlers de Datos
     cargarMaterias,
     handleGuardarMateria,
     agregarParametroGlobal,
     guardarNombreUsuario,
-
-    //Filtros
     filtroMateria,
     setFiltroMateria,
     filtroUnidad,
     setFiltroUnidad,
     proyectosFiltrados: getProyectosFiltrados(),
+    formatoHora, // ← exportar
+    cambiarFormatoHora, // ← exportar
+    isSettingsOpen,
+    setIsSettingsOpen,
+    todasLasNotas,
+    setTodasLasNotas,
   };
 }

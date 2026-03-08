@@ -1,14 +1,16 @@
 import { motion, AnimatePresence } from "framer-motion";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/layout/Sidebar";
 import CommandPalette from "./components/CommandPalette";
 import ModalNuevaMateria from "./components/Modals/ModalNuevaMateria";
 import ModalAdminParametros from "./components/Modals/ModalAdminParametros";
 import WelcomeScreen from "./pages/Welcome";
 import ModalNombre from "./components/Modals/ModalNombre";
-import MateriaDetalle from "./components/MateriaDetalle";
-import Dashboard from "./components/Dashboard";
-import ClasesAgregadasView from "./components/ClasesAgregadasView";
+import MateriaDetalle from "./components/features/materias/MateriaDetalle";
+import Dashboard from "./components/features/dashboard/Dashboard";
+import ClasesAgregadasView from "./components/features/materias/ClasesView";
 import { useAppLogic } from "./hooks/useAppLogic";
+import ModalSettings from "./components/Modals/ModalSettings";
+import TareasView from "./components/features/tareas/TareasView";
 
 function App() {
   // Encapsulamos toda la lógica en un solo objeto
@@ -42,14 +44,19 @@ function App() {
       <CommandPalette
         isOpen={Logic.isSearchOpen}
         setIsOpen={Logic.setIsSearchOpen}
+        materias={Logic.materias}
+        notas={Logic.todasLasNotas}
+        navigateTo={Logic.navigateTo}
       />
 
       <Sidebar
+        view={Logic.view}
+        configSecciones={Logic.configSecciones}
+        onNavigate={Logic.navigateTo}
+        onOpenSettings={() => Logic.setIsSettingsOpen(true)}
         onSearchClick={() => Logic.setIsSearchOpen(true)}
         onOpenAdmin={() => Logic.setIsAdminOpen(true)}
-        configSecciones={Logic.configSecciones}
         onColorChange={Logic.cambiarColorSeccion}
-        onNavigate={Logic.navigateTo}
       />
 
       <main className="flex-1 flex flex-col relative overflow-y-auto">
@@ -67,6 +74,12 @@ function App() {
               setModalOpen={Logic.setModalOpen}
             />
           )}
+
+          {/* Tareas */}
+          {Logic.view.type === "tasks" && (
+            <TareasView key="tasks" materias={Logic.materias} />
+          )}
+
           {/* Vista de detalle de materia */}
           {Logic.view.type === "materia-detalle" && (
             <motion.div
@@ -79,13 +92,14 @@ function App() {
               <MateriaDetalle
                 materia={Logic.view.data}
                 onVolver={() => Logic.navigateTo("dashboard")}
+                idNotaInicial={Logic.view.data?.notaId}
                 configSecciones={Logic.configSecciones}
               />
             </motion.div>
           )}
           {/* Vista de clases agregadas */}
           {Logic.view.type === "clases" && (
-            <ClasesAgregadasView 
+            <ClasesAgregadasView
               key="clases-view"
               materias={Logic.materias}
               resumen={Logic.resumenGlobal}
@@ -110,6 +124,17 @@ function App() {
               onClose={() => Logic.setIsAdminOpen(false)}
               onAdd={Logic.agregarParametroGlobal}
               camposActuales={Logic.plantillaGlobal}
+              formatoHora={Logic.formatoHora}
+              onCambiarFormatoHora={Logic.cambiarFormatoHora}
+            />
+          )}
+          {Logic.isSettingsOpen && (
+            <ModalSettings
+              isOpen={Logic.isSettingsOpen}
+              onClose={() => Logic.setIsSettingsOpen(false)}
+              formatoHora={Logic.formatoHora}
+              onCambiarFormatoHora={Logic.cambiarFormatoHora}
+              onAbrirAdmin={() => Logic.setIsAdminOpen(true)}
             />
           )}
         </AnimatePresence>
