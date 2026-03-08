@@ -1,5 +1,5 @@
 # 🧠 Noties Workspace
-> **v0.0.1-alpha** | Mi "Segundo Cerebro" para la Universidad.
+> **v0.0.7-beta** | Mi "Segundo Cerebro" para la Universidad.
 
 **Noties** es una aplicación de escritorio diseñada para estudiantes que buscan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, Noties centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
 
@@ -7,13 +7,14 @@
 
 ---
 
-## ✨ Características v0.0.1
+## ✨ Características v0.0.7 (Novedades)
 
-- **🗂️ Gestión de Clases Dinámica:** Crea materias con parámetros personalizados (Profesor, Semestre, Links, etc.) mediante un sistema de metadatos flexible.
-- **🎨 Identidad Visual Semántica:** Sistema de colores dinámicos. Al cambiar el color de una sección (Apuntes, Tareas, Proyectos) en la Sidebar, toda la interfaz se sincroniza instantáneamente.
-- **💾 Cerebro Portátil (SQLite):** Al iniciar, la app permite crear o abrir una base de datos en cualquier ubicación (Dropbox, Drive, USB), permitiendo la portabilidad total de tu información.
-- **🚀 Dashboard de Pendientes:** Visualización de "Pendientes Críticos" directamente en las tarjetas de materia, diferenciando entre tareas simples y proyectos.
-- **🌑 Interfaz Dark Mode:** Diseño optimizado para largas sesiones de estudio nocturnas.
+- **🕹️ Kanban Interactivo:** Sistema de *Drag & Drop* fluido para mover proyectos entre estados (Pendiente, En curso, Entregado) con persistencia instantánea en SQLite.
+- **🔍 Ficha Técnica de Proyectos:** Nuevo modal de visualización profunda con jerarquía visual mejorada para descripciones largas, fechas límite y niveles de prioridad.
+- **🖱️ Interacción Contextual:** - **Clic Izquierdo:** Abrir detalles de lectura con diseño inmersivo.
+    - **Clic Derecho:** Acceso directo al editor de parámetros y configuración de secciones (ContextMenu).
+- **📊 Telemetría en Dashboard:** Cálculo en tiempo real de "Pendientes Críticos", porcentaje de avance por materia y detección automática del **Objetivo Prioritario** (entrega más cercana).
+- **🎨 UI Semántica Avanzada:** Sincronización de colores entre la Sidebar y las tarjetas de materia, incluyendo estados visuales (opacidad en entregados y pulsación en urgentes).
 
 ---
 
@@ -22,14 +23,15 @@
 * **Frontend:** React.js + Tailwind CSS
 * **Runtime:** Electron.js
 * **Base de Datos:** SQLite (vía `better-sqlite3`)
-* **Animaciones:** Framer Motion
+* **Animaciones:** Framer Motion (Reorder & Layout Animations)
+* **Iconografía:** React Icons (Feather & Fi)
 
 ---
 
 ## 🚀 Instalación y Desarrollo
 
 ### Requisitos previos
-* [Node.js](https://nodejs.org/) (v16+)
+* [Node.js](https://nodejs.org/) (v18+)
 * npm o yarn
 
 ### Configuración
@@ -54,22 +56,19 @@
 - [ ] **Markdown Engine:** Implementar editor de notas con soporte para fórmulas LaTeX y bloques de código.
 - [ ] **Persistencia de Colores:** Guardar la configuración de la Sidebar en la tabla `config_app`.
 - [ ] **Filtros por Semestre:** Vista filtrada para enfocarse solo en las materias del periodo actual.
-- [ ] **Command Palette:** Activación completa de `Ctrl + K` para navegación ultra rápida.
+- [ ] **Notificaciones:** Alertas de escritorio para proyectos que vencen en menos de 24 horas.
 
 ---
 
-## 📄 Estructura de Datos (Híbrida)
+## 📄 Estructura de Datos (Actualizada)
 
-La aplicación utiliza un enfoque de **Esquema Flexible**:
-- **Tablas Relacionales:** Para la estructura base (Materias, Apuntes).
-- **Metadata JSON:** Para permitir que el usuario añada columnas infinitas sin romper la base de datos.
-
-
+La aplicación utiliza un enfoque de **Esquema Híbrido**:
+- **Tablas Relacionales:** `materias`, `proyectos` (campos optimizados: `prioridad`, `unidad`, `estado`, `fecha_limite`).
+- **Metadata JSON:** Para permitir que el usuario añada campos personalizados en las materias sin alterar el esquema SQL.
+- **Comunicación IPC:** Manejo asíncrono de promesas entre el proceso de renderizado y el proceso principal para garantizar una UI libre de bloqueos.
 
 ---
 
 ## 👤 Autor
 **Carlos-Gandara** - *Desarrollador y Estudiante*
 > "Construyendo las herramientas que desearía haber tenido el primer día de clases."
-
----
