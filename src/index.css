@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    @apply antialiased text-slate-200;
+    @apply antialiased text-slate-200 bg-[#0c0c0c];
     font-family:
       "Inter",
       -apple-system,
@@ -10,12 +10,19 @@
       "Segoe UI",
       Roboto,
       sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Scrollbar estilo minimalista (tipo Notion) */
+/* --- CONTENEDOR PRINCIPAL Y CUADRÍCULA --- */
+.editor-container {
+  background-size: 30px 30px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  min-height: 100vh;
+}
+
+/* --- SCROLLBAR MINIMALISTA --- */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -27,88 +34,161 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Estilos del editor TipTap */
+/* --- ESTILOS NATIVOS DE TIPTAP (ProseMirror) --- */
 .ProseMirror {
   outline: none;
   min-height: 500px;
   font-size: 16px;
   line-height: 1.7;
+  color: #e2e8f0;
+}
+
+/* Tipografía de Títulos */
+.ProseMirror h1 {
+  @apply text-4xl font-extrabold mb-6 mt-8 text-white;
+}
+.ProseMirror h2 {
+  @apply text-2xl font-bold mb-4 mt-6 text-slate-100;
+}
+.ProseMirror h3 {
+  @apply text-xl font-bold mb-3 mt-5 text-slate-200;
 }
 
 .ProseMirror p {
-  margin: 0.6rem 0;
+  margin: 0.8rem 0;
 }
 
-.ProseMirror h1 {
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-.ProseMirror h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
+/* Listas y Tareas */
 .ProseMirror ul {
   list-style: disc;
-  padding-left: 1.4rem;
+  padding-left: 1.5rem;
+}
+.ProseMirror ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
 }
 
-/* El contenedor del cuadro de código */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  @apply flex items-start gap-3 my-2;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  @apply mt-1.5 h-4 w-4 rounded border-white/10 bg-white/5 accent-blue-500 cursor-pointer;
+}
+
+/* Bloques de Código */
 .ProseMirror pre {
-  background: #0a0a0a !important;
+  background: #050505 !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   margin: 1.5rem 0;
   font-family: "JetBrains Mono", "Fira Code", monospace;
   position: relative;
+  @apply shadow-2xl;
 }
 
-/* El texto dentro del cuadro */
 .ProseMirror pre code {
   background: none !important;
   color: #e0e0e0 !important;
-  font-size: 0.85rem !important;
+  font-size: 0.9rem !important;
   line-height: 1.6;
-  padding: 0 !important;
 }
 
-.ProseMirror h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.ProseMirror blockquote {
-  border-left: 3px solid rgba(255, 255, 255, 0.1);
-  padding-left: 1rem;
-  margin: 1rem 0;
-  color: #a1a1aa;
-}
-
-.ProseMirror hr {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin: 2rem 0;
-}
-
-/* Colores de resaltado para tus tareas de Ingeniería */
+/* --- RESALTADO DE SINTAXIS (VS Code Dark) --- */
 .hljs-keyword {
   color: #569cd6;
-} /* if, while, select */
+}
 .hljs-string {
   color: #ce9178;
-} /* "texto" */
+}
 .hljs-comment {
   color: #6a9955;
   font-style: italic;
 }
 .hljs-number {
   color: #b5cea8;
-} /* 12345 */
+}
 .hljs-function {
   color: #dcdcaa;
-} /* miFuncion() */
+}
 .hljs-title {
   color: #4ec9b0;
-} /* Clases */
+}
+
+/* --- BLOQUES DE MATEMÁTICAS (KaTeX) --- */
+.math-node-wrapper {
+  @apply transition-transform duration-200 active:scale-[0.98];
+}
+
+.katex-display {
+  margin: 0 !important;
+  padding: 0.5rem 0;
+}
+
+/* --- IMÁGENES --- */
+.ProseMirror img {
+  @apply rounded-xl border border-white/10 shadow-xl my-6 transition-all;
+  max-width: 100%;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  @apply ring-4 ring-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.3)];
+}
+
+/* Citas y Separadores */
+.ProseMirror blockquote {
+  @apply border-l-4 border-blue-500/30 bg-blue-500/5 py-2 px-5 my-6 italic text-slate-400 rounded-r-lg;
+}
+
+.ProseMirror hr {
+  @apply border-t border-white/5 my-10;
+}
+
+/* Tablas de Ingeniería */
+.ProseMirror table {
+  @apply border-collapse table-auto w-full my-6 rounded-lg overflow-hidden border border-white/10;
+}
+.ProseMirror th {
+  @apply bg-white/5 font-bold p-3 border border-white/10 text-left;
+}
+.ProseMirror td {
+  @apply p-3 border border-white/10;
+}
+
+/* Estilos para el redimensionamiento de imágenes */
+.ProseMirror .prose-mirror-image-resizer {
+  @apply border-2 border-blue-500 rounded-sm;
+  position: relative;
+}
+
+.ProseMirror .prose-mirror-image-resizer > .handler {
+  @apply bg-blue-500 border border-white w-3 h-3 rounded-full;
+  position: absolute;
+  z-index: 100;
+}
+
+/* Posiciones de los manejadores (handlers) */
+.ProseMirror .prose-mirror-image-resizer > .handler.top-left {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+.ProseMirror .prose-mirror-image-resizer > .handler.top-right {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+.ProseMirror .prose-mirror-image-resizer > .handler.bottom-left {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+.ProseMirror .prose-mirror-image-resizer > .handler.bottom-right {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}

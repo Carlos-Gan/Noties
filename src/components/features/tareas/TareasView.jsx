@@ -29,7 +29,7 @@ const TareasView = ({ materias = [] }) => {
       setCargando(true);
       const todas = [];
       for (const m of materias) {
-        const t = await window.electron.invoke("tareas:getByMateria", m.id);
+        const t = await window.electronAPI.invoke("tareas:getByMateria", m.id);
         t.forEach((tarea) => {
           todas.push({
             ...tarea,
@@ -51,7 +51,7 @@ const TareasView = ({ materias = [] }) => {
   }, [materias]);
 
   const toggleTarea = async (id) => {
-    await window.electron.invoke("tareas:toggleCompletada", id);
+    await window.electronAPI.invoke("tareas:toggleCompletada", id);
     setTareas((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, completada: t.completada ? 0 : 1 } : t,
@@ -66,7 +66,7 @@ const TareasView = ({ materias = [] }) => {
     materia_id,
     fecha_limite,
   }) => {
-    await window.electron.invoke("tareas:crear", {
+    await window.electronAPI.invoke("tareas:crear", {
       nombre,
       descripcion,
       prioridad,

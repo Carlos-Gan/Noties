@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import EditorApunte from "../apuntes/EditorApunte";
-import SeccionTareas from "./SeccionTareas";
-import SeccionProyectos from "./SeccionProyectos";
 
 const MateriaApuntes = ({
   materia,
@@ -30,7 +28,7 @@ const MateriaApuntes = ({
 
   const cargarNotas = useCallback(async () => {
     try {
-      const data = await window.electron.invoke(
+      const data = await window.electronAPI.invoke(
         "apuntes:getByMateria",
         materia.id,
       );
@@ -65,13 +63,14 @@ const MateriaApuntes = ({
 
       try {
         setGuardando(true);
-        await window.electron.invoke("apuntes:guardar", {
+        await window.electronAPI.invoke("apuntes:guardar", {
           id: notaActiva.id,
           titulo,
           contenido: JSON.stringify(contenido),
           unidad,
           tags,
         });
+        window.dispatchEvent(new CustomEvent("notas-updated"));
         setNotas((prev) =>
           prev.map((n) =>
             n.id === notaActiva.id
@@ -97,12 +96,13 @@ const MateriaApuntes = ({
 
   const crearNota = async () => {
     try {
-      const nueva = await window.electron.invoke("apuntes:crear", {
+      const nueva = await window.electronAPI.invoke("apuntes:crear", {
         materia_id: materia.id,
         titulo: "Nuevo Apunte",
       });
       setNotas((prev) => [nueva, ...prev]);
       seleccionarNota(nueva);
+      window.dispatchEvent(new CustomEvent("notas-updated"));
     } catch (err) {
       console.error("Error creando nota:", err);
     }
@@ -110,7 +110,7 @@ const MateriaApuntes = ({
 
   const eliminarNota = async (id) => {
     try {
-      await window.electron.invoke("apuntes:eliminar", id);
+      await window.electronAPI.invoke("apuntes:eliminar", id);
       const nuevas = notas.filter((n) => n.id !== id);
       setNotas(nuevas);
       if (notaActiva?.id === id) {
@@ -339,14 +339,6 @@ const MateriaApuntes = ({
               <div className="max-w-4xl mx-auto">
                 {/* Editor */}
                 <EditorApunte contenido={contenido} onChange={setContenido} />
-
-                {/* ─── Tareas ─── */}
-                <div className="border-t border-white/5 mt-16" />
-                <SeccionTareas materia={materia} materias={[materia]} />
-
-                {/* ─── Proyectos ─── */}
-                <div className="border-t border-white/5 mt-10" />
-                <SeccionProyectos materia={materia} />
               </div>
             </div>
           </>

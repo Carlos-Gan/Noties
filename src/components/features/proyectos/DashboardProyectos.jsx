@@ -50,7 +50,7 @@ const ProyectoDashboard = ({ materias = [] }) => {
   const [proyectoEnDetalle, setProyectoEnDetalle] = useState(null);
 
   const cargarDatos = async () => {
-    const data = await window.electron.invoke("proyectos:getAll");
+    const data = await window.electronAPI.invoke("proyectos:getAll");
     setProyectos(data);
   };
 
@@ -78,18 +78,18 @@ const ProyectoDashboard = ({ materias = [] }) => {
     setProyectos((prev) =>
       prev.map((p) => (p.id === proyectoId ? datosActualizados : p)),
     );
-    await window.electron.invoke("proyectos:actualizar", datosActualizados);
+    await window.electronAPI.invoke("proyectos:actualizar", datosActualizados);
     cargarDatos();
   };
 
   const handleSaveProyecto = async (datos) => {
     if (proyectoAEditar?.id) {
-      await window.electron.invoke("proyectos:actualizar", {
+      await window.electronAPI.invoke("proyectos:actualizar", {
         id: proyectoAEditar.id,
         ...datos,
       });
     } else {
-      await window.electron.invoke("proyectos:crear", datos);
+      await window.electronAPI.invoke("proyectos:crear", datos);
     }
     setModalOpen(false);
     cargarDatos();
@@ -198,7 +198,7 @@ const ProyectoDashboard = ({ materias = [] }) => {
                             className="bg-[#1a1a1a] border border-white/5 p-6 rounded-2xl hover:border-indigo-500/30 hover:bg-[#1e1e1e] transition-all group cursor-pointer relative"
                           >
                             <div className="absolute top-4 right-4 text-[9px] font-black text-gray-700 group-hover:text-indigo-500 transition-colors uppercase">
-                              Editar (Right Click)
+                              Editar
                             </div>
                             <h4 className="text-sm font-bold text-gray-200">
                               {p.nombre}

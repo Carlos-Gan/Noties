@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import SeccionTareas from "./SeccionTareas";
+import SeccionTareas from "../tareas/SeccionTareas";
 import SeccionProyectos from "./SeccionProyectos";
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -144,9 +144,9 @@ const MateriaDashboard = ({ materia, onVolver, onVerApuntes, configSecciones }) 
     const cargar = async () => {
       try {
         const [apuntes, tareas, proyectos] = await Promise.all([
-          window.electron.invoke("apuntes:getByMateria", materia.id),
-          window.electron.invoke("tareas:getByMateria", materia.id),
-          window.electron.invoke("proyectos:getByMateria", materia.id),
+          window.electronAPI.invoke("apuntes:getByMateria", materia.id),
+          window.electronAPI.invoke("tareas:getByMateria", materia.id),
+          window.electronAPI.invoke("proyectos:getByMateria", materia.id),
         ]);
 
         setStats({

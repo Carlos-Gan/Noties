@@ -12,10 +12,24 @@ import { useAppLogic } from "./hooks/useAppLogic";
 import ModalSettings from "./components/Modals/ModalSettings";
 import TareasView from "./components/features/tareas/TareasView";
 import ProyectoDashboard from "./components/features/proyectos/DashboardProyectos";
+import { useEffect } from "react";
+import ModalSemestreArchivado from "./components/Modals/ModalSemestreArchivado";
+import NotasDashboard from "./components/features/notas/NotasDashboard";
 
 function App() {
   // Encapsulamos toda la lógica en un solo objeto
   const Logic = useAppLogic();
+
+  useEffect(() => {
+    const handleMouseBack = (e) => {
+      if (e.button === 3) {
+        e.preventDefault();
+        Logic.goBack();
+      }
+    };
+    window.addEventListener("mousedown", handleMouseBack);
+    return () => window.removeEventListener("mousedown", handleMouseBack);
+  }, [Logic.goBack]);
 
   // 1. Cargando Inicial (Usando el estado de la lógica)
   if (Logic.vaultListo === null) {
@@ -61,7 +75,13 @@ function App() {
       />
 
       <main className="flex-1 flex flex-col relative overflow-y-auto">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
+          <ModalSemestreArchivado
+            isOpen={Logic.semestreModal.mostrar}
+            onClose={Logic.semestreModal.cerrar}
+            materias={Logic.semestreModal.materias}
+          />
+
           {/* Vista principal */}
           {Logic.view.type === "dashboard" && (
             <Dashboard
@@ -84,6 +104,15 @@ function App() {
           {/* Proyectos */}
           {Logic.view.type === "projects" && (
             <ProyectoDashboard key="projects" materias={Logic.materias} />
+          )}
+          {/* Notas */}
+          {Logic.view.type === "notes" && (
+            <NotasDashboard
+              key="notes"
+              notas={Logic.todasLasNotas}
+              materias={Logic.materias}
+              navigateTo={Logic.navigateTo}
+            />
           )}
 
           {/* Vista de detalle de materia */}

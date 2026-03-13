@@ -37,15 +37,18 @@ function registerApunteHandlers(ipcMain, getDb) {
 
   ipcMain.handle("apuntes:getByMateria", async (event, materiaId) => {
     const stmt = getDb().prepare(`
-      SELECT a.*, 
+    SELECT a.*,
+      m.nombre as materia_nombre,
+      m.color as materia_color,
       (SELECT GROUP_CONCAT(t.nombre)
        FROM tags t
        JOIN apunte_tags at ON t.id = at.tag_id
        WHERE at.apunte_id = a.id) as tags_list
-      FROM apuntes a
-      WHERE a.materia_id = ?
-      ORDER BY a.updated_at DESC
-    `);
+    FROM apuntes a
+    LEFT JOIN materias m ON a.materia_id = m.id
+    WHERE a.materia_id = ?
+    ORDER BY a.updated_at DESC
+  `);
 
     const apuntes = stmt.all(materiaId);
     return apuntes.map((a) => ({

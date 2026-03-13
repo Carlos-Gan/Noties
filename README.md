@@ -1,5 +1,5 @@
 # 🧠 Noties Workspace
-> **v0.0.7-beta** | Mi "Segundo Cerebro" para la Universidad.
+> **v1.0.0** | Mi "Segundo Cerebro" para la Universidad.
 
 **Noties** es una aplicación de escritorio diseñada para estudiantes que buscan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, Noties centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
 
@@ -7,24 +7,36 @@
 
 ---
 
-## ✨ Características v0.0.7 (Novedades)
+## ✨ Características v1.0.0 (Lanzamiento Funcional)
 
-- **🕹️ Kanban Interactivo:** Sistema de *Drag & Drop* fluido para mover proyectos entre estados (Pendiente, En curso, Entregado) con persistencia instantánea en SQLite.
-- **🔍 Ficha Técnica de Proyectos:** Nuevo modal de visualización profunda con jerarquía visual mejorada para descripciones largas, fechas límite y niveles de prioridad.
-- **🖱️ Interacción Contextual:** - **Clic Izquierdo:** Abrir detalles de lectura con diseño inmersivo.
-    - **Clic Derecho:** Acceso directo al editor de parámetros y configuración de secciones (ContextMenu).
-- **📊 Telemetría en Dashboard:** Cálculo en tiempo real de "Pendientes Críticos", porcentaje de avance por materia y detección automática del **Objetivo Prioritario** (entrega más cercana).
-- **🎨 UI Semántica Avanzada:** Sincronización de colores entre la Sidebar y las tarjetas de materia, incluyendo estados visuales (opacidad en entregados y pulsación en urgentes).
+Esta versión marca el primer hito estable del proyecto, integrando herramientas avanzadas de edición y gestión académica.
+
+### 📝 Notas y Editor Pro
+- **Editor Enriquecido:** Soporte nativo para bloques de código, **imágenes** y renderizado de fórmulas **LaTeX** mediante cadenas de texto.
+- **Dashboard de Notas:** Nueva vista centralizada para explorar y gestionar todos los apuntes del semestre.
+- **Exportación a PDF:** Generación de documentos profesionales a partir de tus notas con un solo clic.
+
+### 📂 Gestión de Clases y Semestres
+- **Archivado Automático:** Sistema inteligente que detecta el fin de cursos y archiva materias según tu configuración.
+- **Centro de Archivo:** Interfaz para consultar, recuperar o eliminar clases de periodos anteriores.
+
+### 🕹️ Experiencia de Usuario (UX)
+- **Navegación por Mouse:** Soporte para botones adicionales del mouse (Back/Forward) para un flujo de trabajo más rápido.
+- **Kanban Interactivo:** Sistema de *Drag & Drop* para mover proyectos entre estados (Pendiente, En curso, Entregado).
+- **Visualización Crítica:** Telemetría en el Dashboard para identificar tareas urgentes y avance global por materia.
+
+### 🛠️ Mejoras Técnicas
+- **Corrección de Renderizado:** Arreglos masivos en la visualización CSS para entornos oscuros.
+- **Persistencia Robusta:** Manejo de base de datos SQLite con verificaciones de integridad al arranque.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-* **Frontend:** React.js + Tailwind CSS
+* **Frontend:** React.js + Tailwind CSS + Framer Motion
 * **Runtime:** Electron.js
 * **Base de Datos:** SQLite (vía `better-sqlite3`)
-* **Animaciones:** Framer Motion (Reorder & Layout Animations)
-* **Iconografía:** React Icons (Feather & Fi)
+* **Procesamiento:** Markdown Engine + KaTeX (LaTeX)
 
 ---
 
@@ -32,7 +44,7 @@
 
 ### Requisitos previos
 * [Node.js](https://nodejs.org/) (v18+)
-* npm o yarn
+* npm
 
 ### Configuración
 1.  **Clonar el repositorio:**
@@ -44,31 +56,22 @@
     ```bash
     npm install
     ```
-3.  **Ejecutar en modo desarrollo:**
+3.  **Ejecutar en modo desarrollo (Incluye parches para Linux):**
     ```bash
-    npm run dev
+    npm run start
     ```
 
 ---
 
-## 📅 Roadmap 0.1.0
-
-- [ ] **Markdown Engine:** Implementar editor de notas con soporte para fórmulas LaTeX y bloques de código.
-- [ ] **Persistencia de Colores:** Guardar la configuración de la Sidebar en la tabla `config_app`.
-- [ ] **Filtros por Semestre:** Vista filtrada para enfocarse solo en las materias del periodo actual.
-- [ ] **Notificaciones:** Alertas de escritorio para proyectos que vencen en menos de 24 horas.
-
----
-
-## 📄 Estructura de Datos (Actualizada)
+## 📄 Estructura de Datos
 
 La aplicación utiliza un enfoque de **Esquema Híbrido**:
-- **Tablas Relacionales:** `materias`, `proyectos` (campos optimizados: `prioridad`, `unidad`, `estado`, `fecha_limite`).
-- **Metadata JSON:** Para permitir que el usuario añada campos personalizados en las materias sin alterar el esquema SQL.
-- **Comunicación IPC:** Manejo asíncrono de promesas entre el proceso de renderizado y el proceso principal para garantizar una UI libre de bloqueos.
+- **Tablas Relacionales:** `materias`, `proyectos` y `apuntes` para consultas de alto rendimiento.
+- **Metadata JSON:** Permite añadir campos personalizados (Profesor, Horario, Links) sin alterar el esquema SQL.
+- **Comunicación IPC:** Protocolo asíncrono entre el proceso de renderizado y el sistema de archivos para garantizar fluidez.
 
 ---
 
 ## 👤 Autor
-**Carlos-Gandara** - *Desarrollador y Estudiante*
+**Carlos-Gandara** - *Desarrollador y Estudiante de Ingeniería en Sistemas*
 > "Construyendo las herramientas que desearía haber tenido el primer día de clases."

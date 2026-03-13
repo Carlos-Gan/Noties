@@ -21,7 +21,7 @@ const SeccionProyectos = ({ materias = [] }) => {
 
   // 1. Cargar datos desde SQLite a través de Electron
   const cargarProyectos = async () => {
-    const data = await window.electron.invoke("proyectos:getAll");
+    const data = await window.electronAPI.invoke("proyectos:getAll");
     setProyectos(data);
   };
 
@@ -31,12 +31,12 @@ const SeccionProyectos = ({ materias = [] }) => {
 
   const handleGuardar = async (datos) => {
     if (proyectoAEditar) {
-      await window.electron.invoke("proyectos:actualizar", {
+      await window.electronAPI.invoke("proyectos:actualizar", {
         ...datos,
         id: proyectoAEditar.id,
       });
     } else {
-      await window.electron.invoke("proyectos:crear", datos);
+      await window.electronAPI.invoke("proyectos:crear", datos);
     }
     cargarProyectos();
     setModalOpen(false);

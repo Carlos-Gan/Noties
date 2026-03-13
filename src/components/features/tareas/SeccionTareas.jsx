@@ -38,7 +38,7 @@ const SeccionTareas = ({ materia, materias }) => {
   const [tareaAEditar, setTareaAEditar] = useState(null);
 
   const cargarTareas = async () => {
-    const data = await window.electron.invoke(
+    const data = await window.electronAPI.invoke(
       "tareas:getByMateria",
       materia.id,
     );
@@ -50,7 +50,7 @@ const SeccionTareas = ({ materia, materias }) => {
   }, [materia.id]);
 
   const toggleTarea = async (id) => {
-    await window.electron.invoke("tareas:toggleCompletada", id);
+    await window.electronAPI.invoke("tareas:toggleCompletada", id);
     setTareas((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, completada: t.completada ? 0 : 1 } : t,
@@ -64,7 +64,7 @@ const SeccionTareas = ({ materia, materias }) => {
     prioridad,
     fecha_limite,
   }) => {
-    await window.electron.invoke("tareas:crear", {
+    await window.electronAPI.invoke("tareas:crear", {
       nombre,
       descripcion,
       prioridad,
@@ -87,13 +87,13 @@ const SeccionTareas = ({ materia, materias }) => {
   const handleGuardar = async (datos) => {
     if (tareaAEditar) {
       // Lógica para actualizar (puedes crear este invoke en tu main de Electron)
-      await window.electron.invoke("tareas:actualizar", {
+      await window.electronAPI.invoke("tareas:actualizar", {
         ...datos,
         id: tareaAEditar.id,
       });
     } else {
       // Tu lógica actual de crear
-      await window.electron.invoke("tareas:crear", {
+      await window.electronAPI.invoke("tareas:crear", {
         ...datos,
         materia_id: materia.id,
         proyecto_id: null,

@@ -9,7 +9,7 @@ export default function WelcomeScreen({ onVaultListo }) {
     setCargando(true);
     setError(null);
     try {
-      const result = await window.electron.invoke("vault:crear");
+      const result = await window.electronAPI.invoke("vault:crear");
       if (result.ok) {
         onVaultListo();
       } else {
@@ -26,7 +26,7 @@ export default function WelcomeScreen({ onVaultListo }) {
     setCargando(true);
     setError(null);
     try {
-      const result = await window.electron.invoke('vault:abrir');
+      const result = await window.electronAPI.invoke('vault:abrir');
       if (result.ok) {
         onVaultListo();
       } else {

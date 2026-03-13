@@ -24,7 +24,7 @@ const SeccionProyectos = ({ materia }) => {
   const [nuevaDesc, setNuevaDesc] = useState("");
 
   const cargarProyectos = async () => {
-    const data = await window.electron.invoke(
+    const data = await window.electronAPI.invoke(
       "proyectos:getByMateria",
       materia.id,
     );
@@ -37,7 +37,7 @@ const SeccionProyectos = ({ materia }) => {
 
   const handleCrear = async () => {
     if (!nuevoNombre.trim()) return;
-    await window.electron.invoke("proyectos:crear", {
+    await window.electronAPI.invoke("proyectos:crear", {
       nombre: nuevoNombre.trim(),
       descripcion: nuevaDesc.trim(),
       materia_id: materia.id,
@@ -63,7 +63,7 @@ const SeccionProyectos = ({ materia }) => {
 
     try {
       // 3. Invocamos el canal de actualización
-      await window.electron.invoke("proyectos:actualizar", datosActualizados);
+      await window.electronAPI.invoke("proyectos:actualizar", datosActualizados);
 
       // 4. Actualizamos el estado local para que la UI responda al instante
       setProyectos((prev) =>

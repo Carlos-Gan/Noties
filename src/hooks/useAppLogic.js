@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigation } from "./useNavigation";
+import { useSemestreAutoArchive } from "./useSemestreAutoArhive";
 
-// ─── Fuera del hook ───────────────────────────────────
+// ─── Funciones Auxiliares ───────────────────────────
 const generarHoras = (formato) => {
   if (formato === "24h") {
     return Array.from({ length: 15 }, (_, i) => {
@@ -37,11 +39,10 @@ export function useAppLogic() {
   const [proyectosPorMateria, setProyectosPorMateria] = useState({});
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [pidioNombre, setPidioNombre] = useState(false);
-  const [view, setView] = useState({ type: "dashboard", data: null });
   const [filtroMateria, setFiltroMateria] = useState("Todas");
   const [filtroUnidad, setFiltroUnidad] = useState("Todas");
   const [resumenGlobal, setResumenGlobal] = useState({ notas: [], tareas: [] });
-  const [formatoHora, setFormatoHora] = useState("12h"); // ← nuevo
+  const [formatoHora, setFormatoHora] = useState("12h");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [todasLasNotas, setTodasLasNotas] = useState([]);
 
@@ -82,10 +83,9 @@ export function useAppLogic() {
     Clases: { color: "bg-green-600", icon: "📚" },
   });
 
-  // ─── Cambiar formato hora ─────────────────────────────
   const cambiarFormatoHora = async (formato) => {
     setFormatoHora(formato);
-    await window.electron.invoke("config:set", "formato_hora", formato);
+    await window.electronAPI.invoke("config:set", "formato_hora", formato);
     setPlantillaGlobal((prev) =>
       prev.map((f) =>
         f.id === "hora" ? { ...f, options: generarHoras(formato) } : f,
@@ -93,21 +93,24 @@ export function useAppLogic() {
     );
   };
 
-  const cargarMaterias = async () => {
+  const cargarMaterias = useCallback(async () => {
     try {
-      const data = await window.electron.invoke("materias:getAll");
+      const data = await window.electronAPI.invoke("materias:getAll");
       setMaterias(data);
       const tareas = {};
       const proyectos = {};
       let notasAcumuladas = [];
 
       for (const m of data) {
-        tareas[m.id] = await window.electron.invoke("tareas:getSueltas", m.id);
-        proyectos[m.id] = await window.electron.invoke(
+        tareas[m.id] = await window.electronAPI.invoke(
+          "tareas:getSueltas",
+          m.id,
+        );
+        proyectos[m.id] = await window.electronAPI.invoke(
           "proyectos:getByMateria",
           m.id,
         );
-        const notasDeMateria = await window.electron.invoke(
+        const notasDeMateria = await window.electronAPI.invoke(
           "apuntes:getByMateria",
           m.id,
         );
@@ -119,19 +122,22 @@ export function useAppLogic() {
     } catch (error) {
       console.error("Error cargando materias:", error);
     }
+  }, []);
+
+  const cargarResumenGlobal = async () => {
+    const res = await window.electronAPI.invoke("dashboard:getResumen");
+    setResumenGlobal(res);
   };
 
-  // Agregamos selectedNotaId como tercer parámetro opcional
-  const navigateTo = (type, data = null, selectedNotaId = null) => {
-    if (type === "clases") cargarResumenGlobal();
-
-    // Guardamos el tipo de vista, la data de la materia y el ID de la nota
-    setView({
-      type,
-      data,
-      selectedNotaId,
+  const { mostrarModal, materiasArchivadas, cerrarModal } =
+    useSemestreAutoArchive({
+      vaultListo,
+      cargarMaterias,
     });
-  };
+
+  const { view, navigateTo, goBack, canGoBack } = useNavigation({
+    onClases: cargarResumenGlobal,
+  });
 
   const cambiarColorSeccion = (seccion, nuevoColor) => {
     setConfigSecciones((prev) => ({
@@ -145,7 +151,7 @@ export function useAppLogic() {
   };
 
   const guardarNombreUsuario = async (nombre) => {
-    await window.electron.invoke("config:set", "nombre_usuario", nombre);
+    await window.electronAPI.invoke("config:set", "nombre_usuario", nombre);
     setNombreUsuario(nombre);
     setPidioNombre(false);
   };
@@ -155,7 +161,7 @@ export function useAppLogic() {
     fields.forEach((f) => {
       metadata[f.id] = f.value;
     });
-    await window.electron.invoke("materias:crear", {
+    await window.electronAPI.invoke("materias:crear", {
       nombre: nombre || "Nueva Materia",
       color: "#3b82f6",
       icono: "📚",
@@ -164,11 +170,6 @@ export function useAppLogic() {
     });
     setModalOpen(false);
     cargarMaterias();
-  };
-
-  const cargarResumenGlobal = async () => {
-    const res = await window.electron.invoke("dashboard:getResumen");
-    setResumenGlobal(res);
   };
 
   const getProyectosFiltrados = () => {
@@ -182,21 +183,25 @@ export function useAppLogic() {
     });
   };
 
-  // ─── Efectos ──────────────────────────────────────────
+  // ─── Efecto de Inicialización ────────────────────────
   useEffect(() => {
-    const checkVault = async () => {
+    const inicializarApp = async () => {
       try {
         let intentos = 0;
-        while (!window.electron && intentos < 10) {
+        while (!window.electronAPI && intentos < 15) {
           await new Promise((r) => setTimeout(r, 100));
           intentos++;
         }
-        if (!window.electron) return;
+        if (!window.electronAPI) return;
 
-        const vaultPath = await window.electron.invoke("vault:check");
-        if (vaultPath) {
+        // Verificar si la DB está lista
+        const isReady = await window.electronAPI.checkDB();
+
+        if (isReady) {
           setVaultListo(true);
-          const nombre = await window.electron.invoke(
+
+          // Cargar nombre de usuario
+          const nombre = await window.electronAPI.invoke(
             "config:get",
             "nombre_usuario",
           );
@@ -204,12 +209,11 @@ export function useAppLogic() {
             setNombreUsuario(nombre);
             setPidioNombre(false);
           } else {
-            setNombreUsuario("");
             setPidioNombre(true);
           }
 
-          // ← Cargar formato hora guardado
-          const formato = await window.electron.invoke(
+          // Cargar formato de hora
+          const formato = await window.electronAPI.invoke(
             "config:get",
             "formato_hora",
           );
@@ -225,20 +229,35 @@ export function useAppLogic() {
           setVaultListo(false);
         }
       } catch (error) {
-        console.error("Error checking vault:", error);
+        console.error("Error inicializando:", error);
         setVaultListo(false);
       }
     };
-    checkVault();
-  }, [vaultListo]);
+    inicializarApp();
+  }, []);
 
   useEffect(() => {
     if (vaultListo === true && !pidioNombre) {
       cargarMaterias();
     }
-  }, [vaultListo, pidioNombre]);
+  }, [vaultListo, pidioNombre, cargarMaterias]);
+
+  useEffect(() => {
+    const handler = () => cargarMaterias();
+    window.addEventListener("materias-updated", handler);
+    window.addEventListener("notas-updated", handler);
+    return () => {
+      window.removeEventListener("materias-updated", handler);
+      window.removeEventListener("notas-updated", handler);
+    };
+  }, [cargarMaterias]);
 
   return {
+    semestreModal: {
+      mostrar: mostrarModal,
+      materias: materiasArchivadas,
+      cerrar: cerrarModal,
+    },
     vaultListo,
     setVaultListo,
     nombreUsuario,
@@ -248,6 +267,8 @@ export function useAppLogic() {
     proyectosPorMateria,
     view,
     navigateTo,
+    goBack,
+    canGoBack,
     configSecciones,
     cambiarColorSeccion,
     resumenGlobal,
@@ -267,8 +288,8 @@ export function useAppLogic() {
     filtroUnidad,
     setFiltroUnidad,
     proyectosFiltrados: getProyectosFiltrados(),
-    formatoHora, // ← exportar
-    cambiarFormatoHora, // ← exportar
+    formatoHora,
+    cambiarFormatoHora,
     isSettingsOpen,
     setIsSettingsOpen,
     todasLasNotas,
