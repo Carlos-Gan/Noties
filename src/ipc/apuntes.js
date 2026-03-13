@@ -1,5 +1,3 @@
-const { ipcMain } = require("electron");
-
 const parseContenido = (contenido) => {
   try {
     return typeof contenido === "string" ? JSON.parse(contenido) : contenido;

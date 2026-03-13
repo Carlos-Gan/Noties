@@ -1,20 +1,36 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const isDev = require("electron-is-dev");
 const Database = require("better-sqlite3");
-const { initDB } = require("./src/database/db");
 
-// Handlers de tus módulos
-const { registerVaultHandlers } = require("./src/ipc/vault");
-const { registerMateriaHandlers } = require("./src/ipc/materias");
-const { registerApunteHandlers } = require("./src/ipc/apuntes");
-const { registerProyectoHandlers } = require("./src/ipc/proyectos");
-const { registerTareaHandlers } = require("./src/ipc/tareas");
-const { registerTagHandlers } = require("./src/ipc/tags");
-const { registerConfigHandlers } = require("./src/ipc/config");
+// Usa path.join con __dirname para asegurar que busque DENTRO de la carpeta de la app
+const { initDB } = require(path.join(__dirname, "src", "database", "db"));
+
+const { registerVaultHandlers } = require(
+  path.join(__dirname, "src", "ipc", "vault"),
+);
+const { registerMateriaHandlers } = require(
+  path.join(__dirname, "src", "ipc", "materias"),
+);
+const { registerApunteHandlers } = require(
+  path.join(__dirname, "src", "ipc", "apuntes"),
+);
+const { registerProyectoHandlers } = require(
+  path.join(__dirname, "src", "ipc", "proyectos"),
+);
+const { registerTareaHandlers } = require(
+  path.join(__dirname, "src", "ipc", "tareas"),
+);
+const { registerTagHandlers } = require(
+  path.join(__dirname, "src", "ipc", "tags"),
+);
+const { registerConfigHandlers } = require(
+  path.join(__dirname, "src", "ipc", "config"),
+);
 
 const configPath = path.join(app.getPath("userData"), "config.json");
+
+const isDev = !app.isPackaged;
 
 // --- FUNCIONES DE CONFIGURACIÓN ---
 function getConfig() {
@@ -80,49 +96,60 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
     height: 1024,
-    minWidth: 800, // Evita que la UI se rompa al hacerse muy chica
+    minWidth: 800,
     minHeight: 600,
     backgroundColor: "#0c0c0c",
-    show: false, // No mostrar hasta que esté listo (evita el "flicker" blanco)
+    show: false,
     webPreferences: {
-      preload: path.resolve(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.js"), // path.join es preferible aquí
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
     },
-    autoHideMenuBar: true, // Oculta el menú con Alt
+    autoHideMenuBar: true,
   });
 
-  // Elimina el menú de arriba por completo para que parezca una App nativa
   win.setMenuBarVisibility(false);
 
-  const url = isDev
-    ? "http://localhost:5173"
-    : `file://${path.join(__dirname, "./dist/index.html")}`;
-
-  win.loadURL(url);
-
-  // Mostrar la ventana solo cuando el contenido esté cargado
-  win.once("ready-to-show", () => {
-    win.show();
-  });
-
-  // Solo abrir herramientas de desarrollo si es modo dev
   if (isDev) {
-    win.webContents.openDevTools();
+    win.loadURL("http://localhost:5173");
   } else {
-    // Seguridad extra: Deshabilitar atajos de DevTools en producción (Ctrl+Shift+I)
-    win.webContents.on("devtools-opened", () => {
-      win.webContents.closeDevTools();
+    // IMPORTANTE: Dado que en tu package.json pusiste "dist/**/*",
+    // el archivo index.html VIVE dentro de una carpeta dist en el asar.
+    const indexPath = path.join(__dirname, "dist", "index.html");
+
+    win.loadFile(indexPath).catch((err) => {
+      console.error("Error al cargar index.html:", err);
+      // Intento de rescate si el archivo quedó en la raíz por error
+      win.loadFile(path.join(__dirname, "index.html"));
     });
   }
+
+  win.once("ready-to-show", () => {
+    // Añade esto justo antes de win.show()
+    win.webContents.on(
+      "did-fail-load",
+      (event, errorCode, errorDescription) => {
+        console.log("❌ Error al cargar:", errorCode, errorDescription);
+      },
+    );
+
+    win.webContents.on(
+      "console-message",
+      (event, level, message, line, sourceId) => {
+        console.log("🖥 LOG DE LA APP:", message);
+      },
+    );
+    win.show();
+    win.webContents.openDevTools();
+  });
+
+  //if (isDev) {
+  //  win.webContents.openDevTools();
+  //}
 }
 
-// Flags para evitar errores en Linux (Durango Fix)
-app.commandLine.appendSwitch("no-sandbox");
 app.commandLine.appendSwitch("disable-dev-shm-usage");
-app.commandLine.appendSwitch("disable-gpu");
-app.commandLine.appendSwitch("disable-software-rasterizer");
 
 app.whenReady().then(() => {
   const config = getConfig();
