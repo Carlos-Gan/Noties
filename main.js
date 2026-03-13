@@ -80,24 +80,42 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1440,
     height: 1024,
+    minWidth: 800, // Evita que la UI se rompa al hacerse muy chica
+    minHeight: 600,
     backgroundColor: "#0c0c0c",
+    show: false, // No mostrar hasta que esté listo (evita el "flicker" blanco)
     webPreferences: {
       preload: path.resolve(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
     },
-    autoHideMenuBar: true,
+    autoHideMenuBar: true, // Oculta el menú con Alt
   });
 
-  // CORRECCIÓN AQUÍ: Línea de carga limpia
+  // Elimina el menú de arriba por completo para que parezca una App nativa
+  win.setMenuBarVisibility(false);
+
   const url = isDev
     ? "http://localhost:5173"
     : `file://${path.join(__dirname, "./dist/index.html")}`;
 
   win.loadURL(url);
 
-  if (isDev) win.webContents.openDevTools();
+  // Mostrar la ventana solo cuando el contenido esté cargado
+  win.once("ready-to-show", () => {
+    win.show();
+  });
+
+  // Solo abrir herramientas de desarrollo si es modo dev
+  if (isDev) {
+    win.webContents.openDevTools();
+  } else {
+    // Seguridad extra: Deshabilitar atajos de DevTools en producción (Ctrl+Shift+I)
+    win.webContents.on("devtools-opened", () => {
+      win.webContents.closeDevTools();
+    });
+  }
 }
 
 // Flags para evitar errores en Linux (Durango Fix)

@@ -1,15 +1,46 @@
 {
   "name": "noties",
   "private": true,
-  "version": "0.0.7",
+  "version": "1.0.0",
   "main": "main.js",
+  "author":{
+    "name": "Carlos Gandara",
+    "email": "gandarac052@gmail.com"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron .",
     "start": "concurrently \"vite\" \"wait-on tcp:5173 && electron . --no-sandbox --disable-dev-shm-usage --disable-gpu\""
+  },
+  "build": {
+    "appId": "com.carlosgan.noties",
+    "productName": "Noties",
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "src/database/**/*",
+      "src/ipc/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "category": "Education",
+      "executableName": "Noties",
+      "icon":"dist/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "dist/icon.ico"
+    }
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.1",
@@ -51,6 +82,7 @@
     "autoprefixer": "^10.4.27",
     "concurrently": "^9.2.1",
     "electron": "^40.7.0",
+    "electron-builder": "^26.8.1",
     "electron-is-dev": "^3.0.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
