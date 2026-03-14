@@ -10,6 +10,7 @@ const CardMateria = ({
   proyectosPendientes = [], // <--- Ya tienes los proyectos de ESTA materia aquí
   configSecciones,
   onClick,
+  onContextMenu
 }) => {
   const estadoColors = {
     "En curso": "bg-green-500/20 text-green-400 border-green-500/10",
@@ -26,6 +27,7 @@ const CardMateria = ({
     <div
       onClick={onClick}
       className="group bg-[#2a2a2a] p-6 rounded-[28px] border border-white/5 hover:border-white/10 hover:bg-[#2f2f2f] transition-all cursor-pointer shadow-xl relative overflow-hidden flex flex-col min-h-[340px] active:scale-[0.98]"
+      onContextMenu={onContextMenu}
     >
       {/* SEMESTRE DE FONDO */}
       <div className="absolute right-[-10px] top-[-20px] pointer-events-none select-none z-0">

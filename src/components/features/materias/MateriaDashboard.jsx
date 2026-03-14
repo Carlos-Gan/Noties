@@ -1,269 +1,366 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import SidebarMateria from "./SiderbarMateria";
 import SeccionTareas from "../tareas/SeccionTareas";
 import SeccionProyectos from "./SeccionProyectos";
+import MateriaStats from "./components/MateriaStats";
+import MateriaEmptyState from "./components/MateriaEmptyState";
 
-// ─── Helpers ──────────────────────────────────────────────────────
-const formatFecha = (fechaStr) => {
-  if (!fechaStr) return null;
-  const f = new Date(fechaStr);
-  const now = new Date();
-  const diff = Math.ceil((f - now) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return { label: "Vencida", urgencia: "vencida" };
-  if (diff === 0) return { label: "Hoy", urgencia: "hoy" };
-  if (diff === 1) return { label: "Mañana", urgencia: "manana" };
-  if (diff <= 7) return { label: `En ${diff} días`, urgencia: "pronto" };
-  return { label: f.toLocaleDateString("es-MX", { day: "numeric", month: "short" }), urgencia: "normal" };
-};
+const MateriaDashboard = ({
+  materia,
+  onVolver,
+  onVerApuntes,
 
-const colorUrgencia = {
-  vencida: "text-red-400 bg-red-500/10",
-  hoy:     "text-orange-400 bg-orange-500/10",
-  manana:  "text-yellow-400 bg-yellow-500/10",
-  pronto:  "text-blue-400 bg-blue-500/10",
-  normal:  "text-gray-400 bg-white/5",
-};
+  onNuevaTarea,
+  onNuevoProyecto,
+}) => {
+  const [stats, setStats] = useState({
+    apuntes: 0,
+    tareasPendientes: 0,
+    tareasCompletadas: 0,
+    proyectos: 0,
+    proyectosCompletados: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("tareas");
+  const [refreshing, setRefreshing] = useState(false);
+  const [tareas, setTareas] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
 
-// ─── Sidebar con metadata ──────────────────────────────────────────
-const SidebarMateria = ({ materia, stats, onVerApuntes }) => {
-  const metadata = useMemo(() => {
-    try { return JSON.parse(materia.metadata || "{}"); }
-    catch { return {}; }
-  }, [materia.metadata]);
+  // Función para recargar SOLO las estadísticas (más rápida)
+  const recargarStats = useCallback(async () => {
+    if (!materia?.id) return;
 
-  const ICONOS_CAMPO = {
-    prof: "👨‍🏫", dias: "📅", hora: "⏰",
-    links: "🔗", semestre: "🔢", estado: "✅",
-  };
+    try {
+      const [apuntes, tareasData, proyectosData] = await Promise.all([
+        window.electronAPI.invoke("apuntes:getByMateria", materia.id),
+        window.electronAPI.invoke("tareas:getByMateria", materia.id),
+        window.electronAPI.invoke("proyectos:getByMateria", materia.id),
+      ]);
 
-  const renderValor = (key, val) => {
-    if (!val || val === "" || (Array.isArray(val) && val.length === 0)) {
-      return <span className="text-gray-600 italic text-xs">Sin definir</span>;
+      setTareas(tareasData);
+      setProyectos(proyectosData);
+
+      setStats({
+        apuntes: apuntes.length,
+        tareasPendientes: tareasData.filter((t) => !t.completada).length,
+        tareasCompletadas: tareasData.filter((t) => t.completada).length,
+        proyectos: proyectosData.length,
+        proyectosCompletados: proyectosData.filter(
+          (p) => p.estado === "entregado",
+        ).length,
+      });
+    } catch (error) {
+      console.error("Error recargando stats:", error);
     }
-    if (Array.isArray(val)) {
-      return (
-        <div className="flex flex-wrap gap-1 mt-1">
-          {val.map((v, i) => (
-            <span key={i} className="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
-              style={{ color: materia.color, borderColor: `${materia.color}40`, backgroundColor: `${materia.color}15` }}>
-              {v}
-            </span>
-          ))}
-        </div>
-      );
-    }
-    if (key === "estado") {
-      const colores = {
-        "En curso":   "text-green-400 bg-green-500/10",
-        "Finalizada": "text-gray-400 bg-white/5",
-        "Pendiente":  "text-yellow-400 bg-yellow-500/10",
-      };
-      return (
-        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${colores[val] || "text-gray-400"}`}>
-          {val}
-        </span>
-      );
-    }
-    if (key === "links" && val.startsWith("http")) {
-      return (
-        <a href={val} target="_blank" rel="noreferrer"
-          className="text-blue-400 text-xs hover:underline truncate block max-w-full">
-          {val}
-        </a>
-      );
-    }
-    return <span className="text-white text-xs">{val}</span>;
-  };
+  }, [materia?.id]);
 
-  return (
-    <aside className="w-72 border-r border-white/5 flex flex-col bg-[#161616] overflow-y-auto">
-      {/* Header materia */}
-      <div className="p-6 border-b border-white/5">
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-4"
-          style={{ backgroundColor: `${materia.color}20` }}
-        >
-          {materia.icono || "📚"}
-        </div>
-        <h2 className="text-lg font-black text-white leading-tight mb-1">{materia.nombre}</h2>
-        <div
-          className="inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold mt-1"
-          style={{ color: materia.color, backgroundColor: `${materia.color}20` }}
-        >
-          {metadata.estado || "En curso"}
-        </div>
-      </div>
+  // Función para recargar todo (con indicador visual)
+  const cargarDatos = useCallback(
+    async (showRefreshing = false) => {
+      if (!materia?.id) return;
 
-      {/* Stats rápidas */}
-      <div className="grid grid-cols-3 border-b border-white/5">
-        {[
-          { label: "Notas", val: stats.apuntes, icon: "📝" },
-          { label: "Tareas", val: stats.tareasPendientes, icon: "✅" },
-          { label: "Proyectos", val: stats.proyectos, icon: "🚀" },
-        ].map((s) => (
-          <div key={s.label} className="flex flex-col items-center py-4 border-r border-white/5 last:border-r-0">
-            <span className="text-lg font-black text-white">{s.val}</span>
-            <span className="text-[9px] text-gray-600 uppercase font-bold mt-0.5">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Metadata */}
-      <div className="p-5 flex-1 space-y-4">
-        <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest">Información</p>
-        {Object.entries(metadata).map(([key, val]) => (
-          <div key={key}>
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs opacity-50">{ICONOS_CAMPO[key] || "🔹"}</span>
-              <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest capitalize">{key}</span>
-            </div>
-            {renderValor(key, val)}
-          </div>
-        ))}
-      </div>
-
-      {/* Botón ver apuntes */}
-      <div className="p-5 border-t border-white/5">
-        <button
-          onClick={onVerApuntes}
-          className="w-full py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 hover:bg-white/5 text-white"
-        >
-          <span>📝</span> Ver Apuntes
-        </button>
-      </div>
-    </aside>
-  );
-};
-
-// ─── Dashboard principal ───────────────────────────────────────────
-const MateriaDashboard = ({ materia, onVolver, onVerApuntes, configSecciones }) => {
-  const [stats, setStats] = useState({ apuntes: 0, tareasPendientes: 0, proyectos: 0 });
-  const [notasRecientes, setNotasRecientes] = useState([]);
-  const [tareasPorVencer, setTareasPorVencer] = useState([]);
-
-  useEffect(() => {
-    const cargar = async () => {
       try {
-        const [apuntes, tareas, proyectos] = await Promise.all([
-          window.electronAPI.invoke("apuntes:getByMateria", materia.id),
-          window.electronAPI.invoke("tareas:getByMateria", materia.id),
-          window.electronAPI.invoke("proyectos:getByMateria", materia.id),
-        ]);
+        if (showRefreshing) setRefreshing(true);
+        await recargarStats();
+      } catch (error) {
+        console.error("Error cargando datos:", error);
+      } finally {
+        setLoading(false);
+        if (showRefreshing) setRefreshing(false);
+      }
+    },
+    [recargarStats, materia?.id],
+  );
 
-        setStats({
-          apuntes: apuntes.length,
-          tareasPendientes: tareas.filter((t) => !t.completada).length,
-          proyectos: proyectos.length,
-        });
+  // Carga inicial
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
-        setNotasRecientes(apuntes.slice(0, 4));
+  // Escuchar TODOS los eventos que puedan afectar a esta materia
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      // Determinar si la actualización afecta a esta materia
+      const materiaId = e.detail?.materiaId || e.detail?.materia_id;
 
-        const proximas = tareas
-          .filter((t) => !t.completada && t.fecha_limite)
-          .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))
-          .slice(0, 3);
-        setTareasPorVencer(proximas);
-      } catch (err) {
-        console.error("Error cargando dashboard materia:", err);
+      if (!materiaId || materiaId === materia.id) {
+        // Recargar stats sin mostrar el indicador de refreshing para que sea instantáneo
+        recargarStats();
       }
     };
-    cargar();
-  }, [materia.id]);
+
+    // Eventos específicos
+    window.addEventListener("tarea-actualizada", handleUpdate);
+    window.addEventListener("tareas-updated", handleUpdate);
+    window.addEventListener("proyectos-updated", handleUpdate);
+    window.addEventListener("notas-updated", handleUpdate);
+
+    // Evento genérico por si acaso
+    window.addEventListener("materias-updated", handleUpdate);
+
+    return () => {
+      window.removeEventListener("tarea-actualizada", handleUpdate);
+      window.removeEventListener("tareas-updated", handleUpdate);
+      window.removeEventListener("proyectos-updated", handleUpdate);
+      window.removeEventListener("notas-updated", handleUpdate);
+      window.removeEventListener("materias-updated", handleUpdate);
+    };
+  }, [materia.id, recargarStats]);
+
+  // Calcular progreso total de ESTA materia
+  const progresoTotal = useMemo(() => {
+    const totalTareas = stats.tareasPendientes + stats.tareasCompletadas;
+    const totalProyectos = stats.proyectos;
+    const totalItems = totalTareas + totalProyectos + stats.apuntes;
+
+    if (totalItems === 0) return 0;
+
+    const completados = stats.tareasCompletadas + stats.proyectosCompletados;
+    return Math.round((completados / totalItems) * 100);
+  }, [stats]);
+
+  // Verificar si hay contenido en ESTA materia
+  const tieneContenido = useMemo(() => {
+    return (
+      stats.apuntes > 0 ||
+      stats.tareasPendientes > 0 ||
+      stats.tareasCompletadas > 0 ||
+      stats.proyectos > 0
+    );
+  }, [stats]);
+
+  // Tabs de navegación
+  const tabs = [
+    { id: "tareas", label: "Tareas", icon: "✓", count: stats.tareasPendientes },
+    { id: "proyectos", label: "Proyectos", icon: "📊", count: stats.proyectos },
+  ];
+
+  if (!materia) return null;
 
   return (
-    <div className="flex h-full bg-[#1a1a1a] text-white overflow-hidden">
+    <div className="flex h-full bg-[#1a1a1a] text-white">
       <SidebarMateria
         materia={materia}
         stats={stats}
         onVerApuntes={onVerApuntes}
       />
 
-      {/* ─── Contenido principal ─── */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <div className="px-10 pt-8 pb-6 border-b border-white/5 flex items-center justify-between">
-          <button
-            onClick={onVolver}
-            className="text-[10px] text-gray-500 uppercase font-black hover:text-white transition-colors"
-          >
-            ← Dashboard
-          </button>
+      <div className="flex-1 overflow-y-auto relative">
+        {/* Header sticky */}
+        <div className="sticky top-0 z-10 bg-[#1a1a1a]/95 backdrop-blur-sm border-b border-white/5">
+          <div className="px-10 pt-8 pb-4">
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={onVolver}
+                className="group flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors"
+              >
+                <span className="transform group-hover:-translate-x-1 transition-transform">
+                  ←
+                </span>
+                <span>Dashboard</span>
+              </button>
+
+              {/* Indicador de progreso de ESTA materia */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      key={progresoTotal} // Forzar animación cuando cambia
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progresoTotal}%` }}
+                      transition={{ duration: 0.3 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: materia.color }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400">
+                    {progresoTotal}% completo
+                  </span>
+                </div>
+
+                {refreshing && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Info rápida de la materia */}
+            <div className="flex items-center gap-4 mb-4">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                style={{ backgroundColor: `${materia.color}20` }}
+              >
+                {materia.icono || "📚"}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">{materia.nombre}</p>
+                <p className="text-[10px] text-gray-500">
+                  Prof. {materia.profesor || "No asignado"}
+                </p>
+              </div>
+            </div>
+
+            {/* Tabs de navegación */}
+            <div className="flex gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSection(tab.id)}
+                  className={`relative px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    activeSection === tab.id
+                      ? "text-white"
+                      : "text-gray-600 hover:text-gray-400"
+                  }`}
+                >
+                  {activeSection === tab.id && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 bg-white/10 rounded-xl"
+                      transition={{
+                        type: "spring",
+                        bounce: 0.2,
+                        duration: 0.6,
+                      }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-2">
+                    {tab.icon} {tab.label}
+                    {tab.count > 0 && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                          activeSection === tab.id
+                            ? "bg-blue-500/20 text-blue-400"
+                            : "bg-white/5 text-gray-500"
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="px-10 py-8 space-y-10 max-w-4xl">
-
-          {/* ─── Notas recientes ─── */}
-          {notasRecientes.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">
-                  Apuntes recientes
-                </h3>
-                <button
-                  onClick={onVerApuntes}
-                  className="text-[10px] text-gray-600 hover:text-white transition-colors"
-                >
-                  Ver todos →
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {notasRecientes.map((nota) => (
-                  <button
-                    key={nota.id}
-                    onClick={onVerApuntes}
-                    className="text-left p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:border-white/15 hover:bg-white/[0.04] transition-all"
-                  >
-                    <p className="text-sm font-bold text-white truncate">{nota.titulo || "Sin título"}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-[10px] text-blue-400 font-bold uppercase">
-                        {nota.unidad || "General"}
-                      </span>
-                      <span className="text-[10px] text-gray-600">
-                        {nota.updated_at
-                          ? new Date(nota.updated_at).toLocaleDateString("es-MX", { day: "numeric", month: "short" })
-                          : "—"}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ─── Tareas por vencer ─── */}
-          {tareasPorVencer.length > 0 && (
-            <section>
-              <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">
-                Próximas a vencer
-              </h3>
-              <div className="space-y-2">
-                {tareasPorVencer.map((t) => {
-                  const fecha = formatFecha(t.fecha_limite);
-                  return (
-                    <div key={t.id} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: materia.color }} />
-                        <p className="text-sm text-white font-medium">{t.nombre}</p>
-                      </div>
-                      {fecha && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${colorUrgencia[fecha.urgencia]}`}>
-                          {fecha.label}
-                        </span>
-                      )}
-                    </div>
+        {/* Contenido */}
+        <div className="px-10 py-8">
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center justify-center py-20"
+              >
+                <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </motion.div>
+            ) : !tieneContenido ? (
+              <MateriaEmptyState
+                materia={materia}
+                onCrearApunte={onVerApuntes}
+                onCrearTarea={() => {
+                  window.dispatchEvent(
+                    new CustomEvent("open-creator", {
+                      detail: { type: "tarea", materiaId: materia.id },
+                    }),
                   );
-                })}
-              </div>
-            </section>
-          )}
+                }}
+                onCrearProyecto={() => {
+                  window.dispatchEvent(
+                    new CustomEvent("open-creator", {
+                      detail: { type: "proyecto", materiaId: materia.id },
+                    }),
+                  );
+                }}
+              />
+            ) : (
+              <motion.div
+                key={activeSection}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-10 max-w-4xl"
+              >
+                {/* Stats de ESTA materia */}
+                <MateriaStats stats={stats} />
 
-          {/* ─── Tareas completas ─── */}
-          <SeccionTareas materia={materia} materias={[materia]} />
+                {/* Sección activa */}
+                {activeSection === "tareas" ? (
+                  <SeccionTareas
+                    materia={materia}
+                    materias={[materia]}
+                    onUpdate={recargarStats} // Usar recargarStats en lugar de cargarDatos
+                  />
+                ) : (
+                  <SeccionProyectos
+                    materia={materia}
+                    onUpdate={() => recargarStats()} // Usar recargarStats en lugar de cargarDatos
+                  />
+                )}
 
-          {/* ─── Proyectos ─── */}
-          <div className="border-t border-white/5 pt-10">
-            <SeccionProyectos materia={materia} />
-          </div>
+                {/* Resumen rápido de ESTA materia */}
+                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                  <div className="bg-white/[0.02] rounded-2xl p-4">
+                    <p className="text-2xl font-black text-white">
+                      {stats.apuntes}
+                    </p>
+                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mt-1">
+                      Apuntes
+                    </p>
+                  </div>
+                  <div className="bg-white/[0.02] rounded-2xl p-4">
+                    <p className="text-2xl font-black text-white">
+                      {stats.tareasCompletadas}/
+                      {stats.tareasPendientes + stats.tareasCompletadas}
+                    </p>
+                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mt-1">
+                      Tareas completadas
+                    </p>
+                  </div>
+                  <div className="bg-white/[0.02] rounded-2xl p-4">
+                    <p className="text-2xl font-black text-white">
+                      {stats.proyectos}
+                    </p>
+                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest mt-1">
+                      Proyectos
+                    </p>
+                  </div>
+                </div>
 
+                {/* Botón rápido para nueva tarea/proyecto */}
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent("open-creator", {
+                          detail: {
+                            type: activeSection,
+                            materiaId: materia.id,
+                          },
+                        }),
+                      );
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-white/[0.03] border border-white/5 rounded-2xl hover:bg-white/[0.06] hover:border-white/10 transition-all group"
+                  >
+                    <span className="text-lg text-gray-600 group-hover:text-white">
+                      +
+                    </span>
+                    <span className="text-xs font-bold text-gray-400 group-hover:text-white">
+                      Nueva {activeSection === "tareas" ? "tarea" : "proyecto"}
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

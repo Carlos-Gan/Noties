@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import ScheduleEditor from "../features/horario/ScheduleEditor";
 
 const MultiSelectDays = ({ value, onChange }) => {
   const dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -162,6 +163,12 @@ const ModalNuevaMateria = ({
                           </option>
                         ))}
                       </select>
+                    )}
+                    {field.type === "schedule" && (
+                      <ScheduleEditor
+                        value={field.value}
+                        onChange={(val) => updateField(field.id, val)}
+                      />
                     )}
                   </div>
                 ))}

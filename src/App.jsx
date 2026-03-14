@@ -15,9 +15,10 @@ import ProyectoDashboard from "./components/features/proyectos/DashboardProyecto
 import { useEffect } from "react";
 import ModalSemestreArchivado from "./components/Modals/ModalSemestreArchivado";
 import NotasDashboard from "./components/features/notas/NotasDashboard";
+import DashboardHorario from "./components/features/horario/DashboardHorario";
+import MateriaApuntes from "./components/features/materias/MateriaApuntes";
 
 function App() {
-  // Encapsulamos toda la lógica en un solo objeto
   const Logic = useAppLogic();
 
   useEffect(() => {
@@ -31,7 +32,6 @@ function App() {
     return () => window.removeEventListener("mousedown", handleMouseBack);
   }, [Logic.goBack]);
 
-  // 1. Cargando Inicial (Usando el estado de la lógica)
   if (Logic.vaultListo === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#141414]">
@@ -44,12 +44,10 @@ function App() {
     );
   }
 
-  // 2. Si no hay Vault configurado
   if (Logic.vaultListo === false) {
     return <WelcomeScreen onVaultListo={() => Logic.setVaultListo(true)} />;
   }
 
-  // 3. Si hay Vault pero falta nombre
   if (Logic.pidioNombre) {
     return <ModalNombre onGuardar={Logic.guardarNombreUsuario} />;
   }
@@ -72,78 +70,168 @@ function App() {
         onSearchClick={() => Logic.setIsSearchOpen(true)}
         onOpenAdmin={() => Logic.setIsAdminOpen(true)}
         onColorChange={Logic.cambiarColorSeccion}
+        materias={Logic.materias}
       />
 
       <main className="flex-1 flex flex-col relative overflow-y-auto">
-        <AnimatePresence mode="sync">
-          <ModalSemestreArchivado
-            isOpen={Logic.semestreModal.mostrar}
-            onClose={Logic.semestreModal.cerrar}
-            materias={Logic.semestreModal.materias}
-          />
+        {/* Modal fuera del AnimatePresence principal */}
+        <ModalSemestreArchivado
+          isOpen={Logic.semestreModal.mostrar}
+          onClose={Logic.semestreModal.cerrar}
+          materias={Logic.semestreModal.materias}
+        />
 
-          {/* Vista principal */}
+        <AnimatePresence mode="wait">
+          {/* Vista principal con keys únicas */}
           {Logic.view.type === "dashboard" && (
-            <Dashboard
-              key="dashboard"
-              nombreUsuario={Logic.nombreUsuario}
-              materias={Logic.materias}
-              tareasPorMateria={Logic.tareasPorMateria}
-              proyectosPorMateria={Logic.proyectosPorMateria}
-              configSecciones={Logic.configSecciones}
-              navigateTo={Logic.navigateTo}
-              setModalOpen={Logic.setModalOpen}
-            />
-          )}
-
-          {/* Tareas */}
-          {Logic.view.type === "tasks" && (
-            <TareasView key="tasks" materias={Logic.materias} />
-          )}
-
-          {/* Proyectos */}
-          {Logic.view.type === "projects" && (
-            <ProyectoDashboard key="projects" materias={Logic.materias} />
-          )}
-          {/* Notas */}
-          {Logic.view.type === "notes" && (
-            <NotasDashboard
-              key="notes"
-              notas={Logic.todasLasNotas}
-              materias={Logic.materias}
-              navigateTo={Logic.navigateTo}
-            />
-          )}
-
-          {/* Vista de detalle de materia */}
-          {Logic.view.type === "materia-detalle" && (
             <motion.div
-              key="materia-detalle"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="flex flex-col h-full"
+              key="dashboard-view"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
             >
-              <MateriaDetalle
-                materia={Logic.view.data}
-                onVolver={() => Logic.navigateTo("dashboard")}
-                idNotaInicial={Logic.view.data?.notaId}
+              <Dashboard
+                nombreUsuario={Logic.nombreUsuario}
+                materias={Logic.materias}
+                tareasPorMateria={Logic.tareasPorMateria}
+                proyectosPorMateria={Logic.proyectosPorMateria}
                 configSecciones={Logic.configSecciones}
+                navigateTo={Logic.navigateTo}
+                setModalOpen={Logic.setModalOpen}
+                eliminarMateria={Logic.eliminarMateria}
               />
             </motion.div>
           )}
-          {/* Vista de clases agregadas */}
+          {Logic.view.type === "tasks" && (
+            <motion.div
+              key="tasks-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <TareasView materias={Logic.materias} />
+            </motion.div>
+          )}
+          {Logic.view.type === "projects" && (
+            <motion.div
+              key="projects-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <ProyectoDashboard materias={Logic.materias} />
+            </motion.div>
+          )}
+          {Logic.view.type === "notes" && (
+            <motion.div
+              key="notes-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <NotasDashboard
+                notas={Logic.todasLasNotas}
+                materias={Logic.materias}
+                navigateTo={Logic.navigateTo}
+              />
+            </motion.div>
+          )}
+          {Logic.view.type === "materia-detalle" && (
+            <motion.div
+              key={`materia-detalle-${Logic.view.data?.id || Logic.view.data?.materiaId}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <MateriaDetalle
+                materia={{
+                  id: Logic.view.data.materiaId || Logic.view.data.id,
+                  nombre:
+                    Logic.view.data.materiaNombre || Logic.view.data.nombre,
+                  color:
+                    Logic.view.data.materiaColor ||
+                    Logic.view.data.color ||
+                    "#3b82f6",
+                }}
+                onVolver={() => Logic.navigateTo("dashboard")}
+                configSecciones={Logic.configSecciones}
+                idNotaInicial={Logic.view.data.notaId}
+                vistaInicial={
+                  Logic.view.data.tab ||
+                  Logic.view.data.openVista ||
+                  "dashboard"
+                }
+              />
+            </motion.div>
+          )}
           {Logic.view.type === "clases" && (
-            <ClasesAgregadasView
+            <motion.div
               key="clases-view"
-              materias={Logic.materias}
-              resumen={Logic.resumenGlobal}
-              onMateriaClick={(m) => Logic.navigateTo("materia-detalle", m)}
-            />
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <ClasesAgregadasView
+                materias={Logic.materias}
+                resumen={Logic.resumenGlobal}
+                onMateriaClick={(m) =>
+                  Logic.navigateTo("materia-detalle", {
+                    ...m,
+                    tab: "dashboard",
+                  })
+                }
+              />
+            </motion.div>
+          )}
+          {Logic.view.type === "horario" && (
+            <motion.div
+              key="horario-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <DashboardHorario materias={Logic.materias} />
+            </motion.div>
+          )}
+
+          {Logic.view.type === "materia-apuntes" && (
+            <motion.div
+              key={`materia-apuntes-${Logic.view.data?.materiaId}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              <MateriaApuntes
+                materia={{
+                  id: Logic.view.data.materiaId,
+                  nombre: Logic.view.data.materiaNombre,
+                  color: Logic.view.data.materiaColor || "#3b82f6",
+                }}
+                onVolver={() => Logic.navigateTo("notes")}
+                configSecciones={Logic.configSecciones}
+                idNotaInicial={Logic.view.data.notaId}
+              />
+            </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Modales */}
+        {/* Modales con su propio AnimatePresence */}
         <AnimatePresence>
           {Logic.isModalOpen && (
             <ModalNuevaMateria

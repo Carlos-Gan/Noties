@@ -48,23 +48,19 @@ export function useAppLogic() {
 
   const [plantillaGlobal, setPlantillaGlobal] = useState([
     { id: "prof", label: "Profesor", type: "text", value: "", icon: "👨‍🏫" },
+
     {
-      id: "dias",
-      label: "Dia de Clase",
-      type: "multi-select",
+      id: "horarios",
+      label: "Horarios",
+      type: "schedule",
       value: [],
       icon: "📅",
     },
-    {
-      id: "hora",
-      label: "Horario",
-      type: "select",
-      options: generarHoras("12h"),
-      value: "",
-      icon: "⏰",
-    },
+
     { id: "links", label: "Links", type: "text", value: "", icon: "🔗" },
+
     { id: "semestre", label: "Semestre", type: "number", value: 1, icon: "🔢" },
+
     {
       id: "estado",
       label: "Estado",
@@ -183,6 +179,12 @@ export function useAppLogic() {
     });
   };
 
+  const eliminarMateria = async (id) => {
+    await window.electronAPI.invoke("materias:delete", id);
+
+    window.dispatchEvent(new CustomEvent("materias-updated"));
+  };
+
   // ─── Efecto de Inicialización ────────────────────────
   useEffect(() => {
     const inicializarApp = async () => {
@@ -294,5 +296,6 @@ export function useAppLogic() {
     setIsSettingsOpen,
     todasLasNotas,
     setTodasLasNotas,
+    eliminarMateria
   };
 }

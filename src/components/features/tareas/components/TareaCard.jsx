@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 const formatFecha = (fechaStr) => {
   if (!fechaStr) return null;
   const f = new Date(fechaStr);
-  const now = new Date(); // ← directo, sin hoy()
+  const now = new Date();
   const diff = Math.ceil((f - now) / (1000 * 60 * 60 * 24));
   if (diff < 0) return { label: "Vencida", urgencia: "vencida" };
   if (diff === 0) return { label: "Hoy", urgencia: "hoy" };
@@ -27,33 +27,65 @@ const colorUrgencia = {
 
 const prioridadIcon = { alta: "🔴", media: "🟡", baja: "🟢" };
 
-// ─── Tarjeta de tarea ──────────────────────────────────────────────
 const TareaCard = ({ tarea, onToggle, colorMateria }) => {
   const fecha = formatFecha(tarea.fecha_limite);
+
+  const handleToggle = async (e) => {
+    e.stopPropagation(); // Evitar que el evento se propague
+
+    // Ejecutar el toggle
+    await onToggle(tarea.id);
+
+    // Disparar evento específico para que el dashboard se actualice
+    window.dispatchEvent(
+      new CustomEvent("tarea-actualizada", {
+        detail: {
+          materiaId: tarea.materia_id,
+          tareaId: tarea.id,
+          completada: !tarea.completada,
+        },
+      }),
+    );
+
+    // También disparar evento global para otros componentes
+    window.dispatchEvent(
+      new CustomEvent("tareas-updated", {
+        detail: { materiaId: tarea.materia_id },
+      }),
+    );
+  };
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       className="flex items-start gap-4 p-4 bg-[#1e1e1e] rounded-2xl border border-white/5 hover:border-white/10 transition-all group"
     >
       {/* Checkbox */}
-      <button
-        onClick={() => onToggle(tarea.id)}
-        className="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleToggle}
+        className="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0"
         style={{ borderColor: colorMateria || "#3b82f6" }}
       >
         {tarea.completada ? (
-          <div
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
             className="w-2.5 h-2.5 rounded-full"
             style={{ backgroundColor: colorMateria || "#3b82f6" }}
           />
         ) : null}
-      </button>
+      </motion.button>
 
       <div className="flex-1 min-w-0">
         <p
-          className={`text-sm font-semibold truncate ${tarea.completada ? "line-through text-gray-600" : "text-white"}`}
+          className={`text-sm font-semibold truncate ${
+            tarea.completada ? "line-through text-gray-600" : "text-white"
+          }`}
         >
           {tarea.nombre}
         </p>
@@ -62,7 +94,7 @@ const TareaCard = ({ tarea, onToggle, colorMateria }) => {
             {tarea.descripcion}
           </p>
         )}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           <span className="text-[10px]">
             {prioridadIcon[tarea.prioridad] || "🟡"}
           </span>

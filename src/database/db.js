@@ -125,6 +125,23 @@ const initDB = (db) => {
     )
   `).run();
 
+  // ─── Evaluaciones ───────────────────────────
+
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS evaluaciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      materia_id INTEGER NOT NULL,
+      nombre TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      porcentaje REAL NOT NULL,
+      calificacion REAL,
+      fecha DATE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
+    )
+    `).run();
+
   // ─── Índices para búsquedas rápidas ───────────────────────────
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_apuntes_materia ON apuntes(materia_id)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_apuntes_favorito ON apuntes(favorito)`).run();

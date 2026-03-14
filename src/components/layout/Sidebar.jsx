@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
 import ContextMenu from "../ContextMenu";
 import {
-  Home, CheckSquare, FileText, Settings,
-  PanelLeft, GraduationCap, Hammer, Archive, RotateCcw, ChevronDown
+  Home,
+  CheckSquare,
+  FileText,
+  Settings,
+  PanelLeft,
+  GraduationCap,
+  Hammer,
+  Archive,
+  RotateCcw,
+  ChevronDown,
+  Calendar,
 } from "lucide-react";
 
 const bgToTextColor = (bg) => {
@@ -11,11 +20,15 @@ const bgToTextColor = (bg) => {
 };
 
 const sidebarItems = [
-  { name: "Home",      icon: Home,          view: "dashboard", section: "Home"      },
-  { name: "Classes",   icon: GraduationCap, view: "clases",    section: "Clases"    },
-  { name: "Tasks",     icon: CheckSquare,   view: "tasks",     section: "Tareas"    },
-  { name: "Notes",     icon: FileText,      view: "notes",     section: "Apuntes"   },
-  { name: "Projects",  icon: Hammer,        view: "projects",  section: "Proyectos" },
+  { name: "Home", icon: Home, view: "dashboard", section: "Home" },
+  { name: "Classes", icon: GraduationCap, view: "clases", section: "Clases" },
+  { name: "Tasks", icon: CheckSquare, view: "tasks", section: "Tareas" },
+  { name: "Notes", icon: FileText, view: "notes", section: "Apuntes" },
+  { name: "Projects", icon: Hammer, view: "projects", section: "Proyectos" },
+];
+
+const extrasItems = [
+  { name: "Horario", icon: Calendar, view: "horario", section: "Horario" },
 ];
 
 export default function Sidebar({
@@ -25,12 +38,13 @@ export default function Sidebar({
   configSecciones,
   onColorChange,
   onOpenAdmin,
+  materias = [],
 }) {
-  const [collapsed, setCollapsed]             = useState(false);
-  const [menuData, setMenuData]               = useState(null);
-  const [archivadas, setArchivadas]           = useState([]);
-  const [archivadasOpen, setArchivadasOpen]   = useState(false);
-  const [restaurando, setRestaurando]         = useState(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [menuData, setMenuData] = useState(null);
+  const [archivadas, setArchivadas] = useState([]);
+  const [archivadasOpen, setArchivadasOpen] = useState(false);
+  const [restaurando, setRestaurando] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebarCollapsed");
@@ -76,12 +90,18 @@ export default function Sidebar({
   };
 
   return (
-    <div className={`h-screen bg-[#0f0f0f] border-r border-white/10 flex flex-col transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}>
-
+    <div
+      className={`h-screen bg-[#0f0f0f] border-r border-white/10 flex flex-col transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-3">
-        {!collapsed && <h1 className="text-white text-sm font-semibold">Noties</h1>}
-        <button onClick={() => setCollapsed(!collapsed)} className="text-gray-400 hover:text-white">
+        {!collapsed && (
+          <h1 className="text-white text-sm font-semibold">Noties</h1>
+        )}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-gray-400 hover:text-white"
+        >
           <PanelLeft size={18} />
         </button>
       </div>
@@ -89,7 +109,7 @@ export default function Sidebar({
       {/* Navigation */}
       <div className="flex flex-col gap-1 px-2">
         {sidebarItems.map((item) => {
-          const Icon   = item.icon;
+          const Icon = item.icon;
           const active = view?.type === item.view;
           const sectionColor = configSecciones?.[item.section]?.color;
 
@@ -109,7 +129,8 @@ export default function Sidebar({
                   className={`transition-colors ${
                     active
                       ? bgToTextColor(sectionColor)
-                      : "text-gray-500 group-hover:" + bgToTextColor(sectionColor)
+                      : "text-gray-500 group-hover:" +
+                        bgToTextColor(sectionColor)
                   }`}
                 />
                 {!collapsed && <span>{item.name}</span>}
@@ -120,6 +141,48 @@ export default function Sidebar({
       </div>
 
       <div className="flex-1" />
+      {/* Divisor */}
+      <div className="mx-3 my-2 h-px bg-white/10" />
+
+      {/* ─── Extras General ─── */}
+      <div className="flex flex-col gap-1 px-2">
+        {extrasItems.map((item) => {
+          const Icon = item.icon;
+          const active = view?.type === item.view;
+          const sectionColor = configSecciones?.[item.section]?.color;
+
+          return (
+            <div key={item.view} className="relative group">
+              <button
+                onClick={() => onNavigate(item.view)}
+                onContextMenu={(e) => handleRightClick(e, item.section)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-sm ${
+                  active
+                    ? "bg-white/10 text-white"
+                    : "text-gray-500 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Icon
+                  size={18}
+                  className={`transition-colors ${
+                    active
+                      ? bgToTextColor(sectionColor)
+                      : "text-gray-500 group-hover:" +
+                        bgToTextColor(sectionColor)
+                  }`}
+                />
+                {!collapsed && <span>{item.name}</span>}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+
+
+
+      {/*  Divisor  */}
+      <div className="mx-3 my-2 h-px bg-white/10" />
 
       {/* ─── Materias Archivadas ─── */}
       {archivadas.length > 0 && (
@@ -132,7 +195,9 @@ export default function Sidebar({
             <Archive size={16} className="flex-shrink-0" />
             {!collapsed && (
               <>
-                <span className="flex-1 text-left text-xs font-semibold">Archivadas</span>
+                <span className="flex-1 text-left text-xs font-semibold">
+                  Archivadas
+                </span>
                 <span className="text-[10px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md font-bold mr-1">
                   {archivadas.length}
                 </span>
@@ -166,10 +231,11 @@ export default function Sidebar({
                     className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 hover:text-green-400 text-gray-600 rounded-lg hover:bg-green-500/10"
                     title="Restaurar"
                   >
-                    {restaurando === m.id
-                      ? <span className="text-[9px] font-bold">...</span>
-                      : <RotateCcw size={11} />
-                    }
+                    {restaurando === m.id ? (
+                      <span className="text-[9px] font-bold">...</span>
+                    ) : (
+                      <RotateCcw size={11} />
+                    )}
                   </button>
                 </div>
               ))}

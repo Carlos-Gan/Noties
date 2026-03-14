@@ -1,47 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
-
-// ─── Helpers ──────────────────────────────────────────────────────
-const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-const MESES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
-
-const hoy = () => new Date();
-
-const mismodia = (a, b) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
-const diasEnMes = (year, month) => new Date(year, month + 1, 0).getDate();
-const primerDiaSemana = (year, month) => new Date(year, month, 1).getDay();
-
-const colorUrgencia = {
-  vencida: "text-red-400 bg-red-500/10 border-red-500/20",
-  hoy: "text-orange-400 bg-orange-500/10 border-orange-500/20",
-  manana: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
-  pronto: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
-  semana: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-  normal: "text-gray-400 bg-white/5 border-white/5",
-};
-
-const prioridadIcon = { alta: "🔴", media: "🟡", baja: "🟢" };
+import { motion } from "framer-motion";
+import {
+  DIAS,
+  MESES,
+  diasEnMes,
+  primerDiaSemana,
+  mismodia,
+} from "./tareaHelpers";
 
 // ─── Componente Calendario ─────────────────────────────────────────
-const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
-  const [mes, setMes] = useState(hoy().getMonth());
-  const [year, setYear] = useState(hoy().getFullYear());
+const CalendarioView = ({
+  tareas,
+  materias,
+  onDiaClick,
+  onDiaClickDerecho,
+  diaSeleccionado,
+}) => {
+  const [mes, setMes] = useState(new Date().getMonth());
+  const [year, setYear] = useState(new Date().getFullYear());
 
   const colorMateria = useMemo(() => {
     const map = {};
@@ -86,13 +62,27 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
     setYear(ny);
   };
 
+  // Función para manejar clic izquierdo
+  const handleClick = (e, fechaDelDia) => {
+    e.preventDefault(); // Por si acaso
+    onDiaClick(fechaDelDia);
+  };
+
+  // Función para manejar clic derecho
+  const handleContextMenu = (e, fechaDelDia) => {
+    e.preventDefault(); // Evita el menú contextual del navegador
+    if (onDiaClickDerecho) {
+      onDiaClickDerecho(fechaDelDia);
+    }
+  };
+
   return (
     <div className="bg-[#1e1e1e] rounded-3xl border border-white/5 p-6">
       {/* Header mes */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => cambiarMes(-1)}
-          className="text-gray-500 hover:text-white transition-colors p-1"
+          className="text-gray-500 hover:text-white transition-colors p-1 text-lg"
         >
           ‹
         </button>
@@ -101,7 +91,7 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
         </h3>
         <button
           onClick={() => cambiarMes(1)}
-          className="text-gray-500 hover:text-white transition-colors p-1"
+          className="text-gray-500 hover:text-white transition-colors p-1 text-lg"
         >
           ›
         </button>
@@ -122,21 +112,24 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
       {/* Celdas */}
       <div className="grid grid-cols-7 gap-1">
         {celdas.map((dia, i) => {
-          if (!dia) return <div key={`empty-${i}`} />;
+          if (!dia) return <div key={`empty-${i}`} className="aspect-square" />;
+
           const fechaDelDia = new Date(year, mes, dia);
-          const esHoy = mismodia(fechaDelDia, hoy());
+          const esHoy = mismodia(fechaDelDia, new Date());
           const esSel =
             diaSeleccionado && mismodia(fechaDelDia, diaSeleccionado);
           const tareasDelDia = tareasPorDia[dia] || [];
 
           return (
-            // Cambia el botón de cada celda por esto:
-            <button
+            <motion.button
               key={dia}
-              onClick={() => onDiaClick(fechaDelDia)} // ← siempre pasa la fecha, no solo si hay tareas
-              className={`relative flex flex-col items-center p-1.5 rounded-xl transition-all min-h-[44px] group ${
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={(e) => handleClick(e, fechaDelDia)}
+              onContextMenu={(e) => handleContextMenu(e, fechaDelDia)}
+              className={`relative flex flex-col items-center p-2 rounded-xl transition-all min-h-[52px] group ${
                 esSel
-                  ? "bg-blue-600"
+                  ? "bg-blue-600 ring-2 ring-blue-400 ring-offset-2 ring-offset-[#1e1e1e]"
                   : esHoy
                     ? "bg-white/10 border border-white/20"
                     : "hover:bg-white/5 cursor-pointer"
@@ -150,8 +143,9 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
                 {dia}
               </span>
 
+              {/* Indicadores de tareas */}
               {tareasDelDia.length > 0 ? (
-                <div className="flex flex-wrap justify-center gap-0.5 mt-1">
+                <div className="flex flex-wrap justify-center gap-0.5 mt-1 px-1">
                   {tareasDelDia.slice(0, 3).map((t, idx) => (
                     <div
                       key={idx}
@@ -160,6 +154,7 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
                         backgroundColor:
                           colorMateria[t.materia_id] || "#3b82f6",
                       }}
+                      title={t.nombre}
                     />
                   ))}
                   {tareasDelDia.length > 3 && (
@@ -171,9 +166,41 @@ const CalendarioView = ({ tareas, materias, onDiaClick, diaSeleccionado }) => {
                   +
                 </span>
               )}
-            </button>
+
+              {/* Tooltip con info */}
+              {tareasDelDia.length > 0 && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-[#2a2a2a] border border-white/10 rounded-lg text-[9px] text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {tareasDelDia.length} tarea
+                  {tareasDelDia.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </motion.button>
           );
         })}
+      </div>
+
+      {/* Leyenda */}
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5 text-[9px] text-gray-600">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span>Clic izquierdo: filtrar día</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-orange-500" />
+            <span>Clic derecho: crear tarea</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-0.5 bg-white/20 rounded" />
+            <span>Hoy</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-blue-600" />
+            <span>Seleccionado</span>
+          </div>
+        </div>
       </div>
     </div>
   );

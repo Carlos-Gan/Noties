@@ -29,12 +29,12 @@ const colorUrgencia = {
 const prioridadIcon = { alta: "🔴", media: "🟡", baja: "🟢" };
 const FILTROS = ["Todas", "Alta", "Media", "Baja", "Vencidas"];
 
-const SeccionTareas = ({ materia, materias }) => {
+const SeccionTareas = ({ materia, materias, onUpdate }) => {
+  // 👈 Añadir onUpdate a las props
   const [tareas, setTareas] = useState([]);
   const [filtro, setFiltro] = useState("Todas");
   const [modalOpen, setModalOpen] = useState(false);
-  const [menuContextual, setMenuContextual] = useState(null); // { x: 0, y: 0, tareaId: null }
-  const [editandoTarea, setEditandoTarea] = useState(null); // Tarea que se va a editar
+  const [menuContextual, setMenuContextual] = useState(null);
   const [tareaAEditar, setTareaAEditar] = useState(null);
 
   const cargarTareas = async () => {
@@ -49,13 +49,63 @@ const SeccionTareas = ({ materia, materias }) => {
     cargarTareas();
   }, [materia.id]);
 
-  const toggleTarea = async (id) => {
+  // Escuchar eventos externos
+  useEffect(() => {
+    const handleTareasUpdated = (e) => {
+      const materiaId = e.detail?.materiaId;
+      if (!materiaId || materiaId === materia.id) {
+        cargarTareas();
+      }
+    };
+
+    window.addEventListener("tareas-updated", handleTareasUpdated);
+    window.addEventListener("tarea-actualizada", handleTareasUpdated);
+
+    return () => {
+      window.removeEventListener("tareas-updated", handleTareasUpdated);
+      window.removeEventListener("tarea-actualizada", handleTareasUpdated);
+    };
+  }, [materia.id]);
+
+  const handleToggleTarea = async (id) => {
+    // Encontrar la tarea antes de toggle para saber su estado actual
+    const tarea = tareas.find((t) => t.id === id);
+    if (!tarea) return;
+
+    // Actualizar en la base de datos
     await window.electronAPI.invoke("tareas:toggleCompletada", id);
+
+    // Actualizar el estado local inmediatamente
     setTareas((prev) =>
       prev.map((t) =>
         t.id === id ? { ...t, completada: t.completada ? 0 : 1 } : t,
       ),
     );
+
+    // Disparar evento específico para esta materia
+    window.dispatchEvent(
+      new CustomEvent("tarea-actualizada", {
+        detail: {
+          materiaId: materia.id,
+          tareaId: id,
+          completada: !tarea.completada,
+        },
+      }),
+    );
+
+    // Evento global
+    window.dispatchEvent(
+      new CustomEvent("tareas-updated", {
+        detail: { materiaId: materia.id },
+      }),
+    );
+
+    // Llamar a onUpdate del padre después de un pequeño delay
+    if (onUpdate) {
+      setTimeout(() => {
+        onUpdate();
+      }, 50);
+    }
   };
 
   const handleCrear = async ({
@@ -72,35 +122,62 @@ const SeccionTareas = ({ materia, materias }) => {
       fecha_limite,
       proyecto_id: null,
     });
-    cargarTareas();
+    await cargarTareas();
+
+    // Notificar al padre
+    if (onUpdate) {
+      onUpdate();
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("tareas-updated", {
+        detail: { materiaId: materia.id },
+      }),
+    );
+  };
+
+  const handleActualizar = async (datos) => {
+    await window.electronAPI.invoke("tareas:actualizar", {
+      ...datos,
+      id: tareaAEditar.id,
+    });
+    await cargarTareas();
+
+    // Notificar al padre
+    if (onUpdate) {
+      onUpdate();
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("tareas-updated", {
+        detail: { materiaId: materia.id },
+      }),
+    );
+  };
+
+  const handleEliminar = async (id) => {
+    await window.electronAPI.invoke("tareas:eliminar", id);
+    await cargarTareas();
+
+    // Notificar al padre
+    if (onUpdate) {
+      onUpdate();
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("tareas-updated", {
+        detail: { materiaId: materia.id },
+      }),
+    );
   };
 
   const handleContextMenu = (e, tarea) => {
-    e.preventDefault(); // Bloquea el menú normal
+    e.preventDefault();
     setMenuContextual({
       x: e.pageX,
       y: e.pageY,
       tarea: tarea,
     });
-  };
-
-  const handleGuardar = async (datos) => {
-    if (tareaAEditar) {
-      // Lógica para actualizar (puedes crear este invoke en tu main de Electron)
-      await window.electronAPI.invoke("tareas:actualizar", {
-        ...datos,
-        id: tareaAEditar.id,
-      });
-    } else {
-      // Tu lógica actual de crear
-      await window.electronAPI.invoke("tareas:crear", {
-        ...datos,
-        materia_id: materia.id,
-        proyecto_id: null,
-      });
-    }
-    setTareaAEditar(null); // Limpiamos después de guardar
-    cargarTareas();
   };
 
   // Función para cerrar el menú al hacer clic fuera
@@ -140,9 +217,9 @@ const SeccionTareas = ({ materia, materias }) => {
         </div>
         <button
           onClick={() => {
-            setTareaAEditar(null); // Nos aseguramos de limpiar cualquier tarea que se estuviera editando
-            setModalOpen(true)}
-          }
+            setTareaAEditar(null);
+            setModalOpen(true);
+          }}
           className="px-3 py-1.5 bg-orange-500 hover:bg-orange-400 rounded-xl text-xs font-bold transition-all"
         >
           + Nueva
@@ -190,10 +267,10 @@ const SeccionTareas = ({ materia, materias }) => {
                 <div
                   key={tarea.id}
                   onContextMenu={(e) => handleContextMenu(e, tarea)}
-                  className="flex items-start gap-3 p-3 bg-white/[0.02] rounded-xl border border-white/5 hover:border-white/10 transition-all"
+                  className="flex items-start gap-3 p-3 bg-white/[0.02] rounded-xl border border-white/5 hover:border-white/10 transition-all group"
                 >
                   <button
-                    onClick={() => toggleTarea(tarea.id)}
+                    onClick={() => handleToggleTarea(tarea.id)}
                     className="mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
                     style={{ borderColor: materia.color || "#3b82f6" }}
                   >
@@ -228,33 +305,37 @@ const SeccionTareas = ({ materia, materias }) => {
                       )}
                     </div>
                   </div>
+
+                  {/* Indicador de menú contextual */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 text-xs">
+                    ⋮
+                  </div>
                 </div>
               );
             })
         )}
+
+        {/* Menú contextual */}
         {menuContextual && (
           <div
             className="fixed z-50 bg-[#1a1a1a] border border-white/10 shadow-2xl rounded-lg py-1 w-40 overflow-hidden"
             style={{ top: menuContextual.y, left: menuContextual.x }}
-          > 
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => {
-                setTareaAEditar(menuContextual.tarea); // Guardamos la tarea a editar
-                setModalOpen(true); // Reutilizamos tu modal
-                setMenuContextual(null); // Cerramos el menú
+                setTareaAEditar(menuContextual.tarea);
+                setModalOpen(true);
+                setMenuContextual(null);
               }}
               className="w-full text-left px-4 py-2 text-xs font-bold text-gray-300 hover:bg-orange-500 hover:text-white transition-colors flex items-center gap-2"
             >
               ✏️ Editar tarea
             </button>
             <button
-              onClick={async () => {
-                // Aquí podrías llamar a una función de borrar
-                await window.electron.invoke(
-                  "tareas:eliminar",
-                  menuContextual.tarea.id,
-                );
-                cargarTareas();
+              onClick={() => {
+                handleEliminar(menuContextual.tarea.id);
+                setMenuContextual(null);
               }}
               className="w-full text-left px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-colors flex items-center gap-2"
             >
@@ -268,11 +349,11 @@ const SeccionTareas = ({ materia, materias }) => {
         isOpen={modalOpen}
         onClose={() => {
           setModalOpen(false);
-          setTareaAEditar(null); // Limpiamos la tarea a editar al cerrar
+          setTareaAEditar(null);
         }}
-        onSave={handleGuardar}
+        onSave={tareaAEditar ? handleActualizar : handleCrear}
         materias={materias}
-        tarea={tareaAEditar} // Pasamos la tarea a editar (si es que hay)
+        tarea={tareaAEditar}
         fechaInicial={null}
       />
     </div>

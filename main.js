@@ -28,6 +28,11 @@ const { registerConfigHandlers } = require(
   path.join(__dirname, "src", "ipc", "config"),
 );
 
+const evaluacionesModule = require(
+  path.join(__dirname, "src", "ipc", "evaluaciones"),
+);
+console.log("📦 Módulo evaluaciones completo:", evaluacionesModule);
+
 const configPath = path.join(app.getPath("userData"), "config.json");
 
 const isDev = !app.isPackaged;
@@ -163,7 +168,15 @@ app.whenReady().then(() => {
   registerTareaHandlers(ipcMain, getDb);
   registerTagHandlers(ipcMain, getDb);
   registerConfigHandlers(ipcMain, getConfig, saveConfig, getDb);
-
+  console.log("📝 Intentando registrar evaluaciones handlers...");
+  if (typeof evaluacionesModule === "function") {
+    evaluacionesModule(ipcMain, getDb);
+  } else {
+    console.error(
+      "❌ evaluacionesModule no es una función. Es:",
+      typeof evaluacionesModule,
+    );
+  }
   createWindow();
 
   app.on("activate", () => {

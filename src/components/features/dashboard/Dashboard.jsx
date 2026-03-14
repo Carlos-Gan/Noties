@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
-import CardMateria from "../materias/CardMateria";
+import CardMateria from "../materias/components/CardMateria";
 
-const Dashboard = ({ 
-  nombreUsuario, 
-  materias, 
-  tareasPorMateria, 
-  proyectosPorMateria, 
-  configSecciones, 
-  navigateTo, 
-  setModalOpen 
+const Dashboard = ({
+  nombreUsuario,
+  materias,
+  tareasPorMateria,
+  proyectosPorMateria,
+  configSecciones,
+  navigateTo,
+  setModalOpen,
+  eliminarMateria
 }) => {
   return (
     <>
@@ -44,7 +45,10 @@ const Dashboard = ({
             // Intentamos parsear la metadata de forma segura
             let meta = {};
             try {
-              meta = typeof m.metadata === 'string' ? JSON.parse(m.metadata) : (m.metadata || {});
+              meta =
+                typeof m.metadata === "string"
+                  ? JSON.parse(m.metadata)
+                  : m.metadata || {};
             } catch (e) {
               meta = {};
             }
@@ -63,6 +67,13 @@ const Dashboard = ({
                 configSecciones={configSecciones}
                 // CORRECCIÓN AQUÍ: Usamos "materia-detalle" para que coincida con App.js
                 onClick={() => navigateTo("materia-detalle", m)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+
+                  if (confirm(`¿Eliminar la materia "${m.nombre}"?`)) {
+                    eliminarMateria(m.id);
+                  }
+                }}
               />
             );
           })}
