@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, version } from "react";
+import { version } from "../../package.json";
 
 export default function WelcomeScreen({ onVaultListo }) {
   const [cargando, setCargando] = useState(false);
@@ -205,7 +206,7 @@ export default function WelcomeScreen({ onVaultListo }) {
         transition={{ delay: 1.2 }}
         className="absolute bottom-6 text-[10px] text-gray-700 uppercase tracking-widest"
       >
-        Noties v0.1 — Tu cerebro, tu vault
+        Noties {version} — Tu cerebro, tu vault
       </motion.span>
     </div>
   );

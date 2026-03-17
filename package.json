@@ -2,7 +2,7 @@
   "name": "noties",
   "private": true,
   "version": "1.1.5",
-  "license":"MIT",
+  "license": "MIT",
   "main": "main.js",
   "description": "Sistema de gestión académica y segundo cerebro.",
   "author": {
@@ -15,7 +15,9 @@
     "dist": "npm run build && electron-builder",
     "lint": "eslint .",
     "electron": "electron .",
-    "start": "concurrently \"vite\" \"wait-on tcp:5173 && electron . --no-sandbox\""
+    "start": "concurrently \"vite\" \"wait-on tcp:5173 && electron . --no-sandbox\"",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "build": {
     "appId": "com.carlosgan.noties",
@@ -51,6 +53,11 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
     }
   },
   "dependencies": {
