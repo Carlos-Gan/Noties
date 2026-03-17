@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, version } from "react";
+import { useState } from "react";
 import { version } from "../../package.json";
 
 export default function WelcomeScreen({ onVaultListo }) {
