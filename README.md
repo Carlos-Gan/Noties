@@ -72,3 +72,6 @@ La aplicación utiliza un enfoque de **Esquema Híbrido** diseñado para la flex
 **Carlos-Gandara** - _Desarrollador y Estudiante de Ingeniería en Sistemas_
 
 > "Construyendo las herramientas que desearía haber tenido el primer día de clases."
+
+# Cosas agregadas
+- Se agrego Unidad a los parametros de evaluaciones

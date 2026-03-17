@@ -8,7 +8,13 @@ module.exports = function registerEvalHandlers(ipcMain, getDb) {
       const stmt = db.prepare(`
         SELECT * FROM evaluaciones 
         WHERE materia_id = ? 
-        ORDER BY fecha DESC
+        ORDER BY 
+          CASE 
+            WHEN unidad IS NULL THEN 1 
+            ELSE 0 
+          END,
+          unidad,
+          fecha DESC
       `);
       return stmt.all(materiaId);
     } catch (error) {
@@ -20,16 +26,24 @@ module.exports = function registerEvalHandlers(ipcMain, getDb) {
   ipcMain.handle("evaluaciones:crear", async (event, data) => {
     try {
       const db = getDb();
-      const { materia_id, nombre, tipo, porcentaje, calificacion, fecha } =
-        data;
+      const {
+        materia_id,
+        nombre,
+        tipo,
+        unidad,
+        porcentaje,
+        calificacion,
+        fecha,
+      } = data;
       const stmt = db.prepare(`
-        INSERT INTO evaluaciones (materia_id, nombre, tipo, porcentaje, calificacion, fecha)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO evaluaciones (materia_id, nombre, tipo, unidad, porcentaje, calificacion, fecha)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       const result = stmt.run(
         materia_id,
         nombre,
         tipo,
+        unidad || null,
         porcentaje,
         calificacion || null,
         fecha || null,
@@ -46,15 +60,17 @@ module.exports = function registerEvalHandlers(ipcMain, getDb) {
   ipcMain.handle("evaluaciones:actualizar", async (event, data) => {
     try {
       const db = getDb();
-      const { id, nombre, tipo, porcentaje, calificacion, fecha } = data;
+      const { id, nombre, tipo, unidad, porcentaje, calificacion, fecha } =
+        data;
       const stmt = db.prepare(`
         UPDATE evaluaciones 
-        SET nombre = ?, tipo = ?, porcentaje = ?, calificacion = ?, fecha = ?, updated_at = CURRENT_TIMESTAMP
+        SET nombre = ?, tipo = ?, unidad = ?, porcentaje = ?, calificacion = ?, fecha = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `);
       const result = stmt.run(
         nombre,
         tipo,
+        unidad,
         porcentaje,
         calificacion,
         fecha,
@@ -107,7 +123,14 @@ module.exports = function registerEvalHandlers(ipcMain, getDb) {
         SELECT e.*, m.nombre as materia_nombre, m.color as materia_color 
         FROM evaluaciones e
         LEFT JOIN materias m ON e.materia_id = m.id
-        ORDER BY e.fecha DESC
+        ORDER BY 
+          m.nombre,
+          CASE 
+            WHEN e.unidad IS NULL THEN 1 
+            ELSE 0 
+          END,
+          e.unidad,
+          e.fecha DESC
       `);
       return stmt.all();
     } catch (error) {

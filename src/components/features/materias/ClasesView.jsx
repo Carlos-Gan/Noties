@@ -11,9 +11,10 @@ import {
 } from "react-icons/fi";
 import SeccionProyectos from "../proyectos/SeccionProyectos";
 import MateriaCard from "./components/CardMateria";
-import GradePredictorWidget from "../materias/components/GradePredictor";
+import GradePredictorWidget from "../../widget/GradePredictor/GradePredictor";
 import ProximaClaseWidget from "../../widget/ProximaClaseWidget";
 import StudyStreakWidget from "../../widget/StudyStreakWidget";
+import DashboardEvaluaciones from "../dashboard/DashboardEvaluaciones";
 
 const ClasesAgregadasView = ({
   materias = [],
@@ -412,7 +413,7 @@ const ClasesAgregadasView = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
           >
-            <GradePredictorWidget
+            <DashboardEvaluaciones
               materias={materias}
               onMateriaClick={onMateriaClick}
             />

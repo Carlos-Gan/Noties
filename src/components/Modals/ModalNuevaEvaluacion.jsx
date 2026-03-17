@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiSave, FiCalendar, FiPercent, FiType } from "react-icons/fi";
+import {
+  FiX,
+  FiSave,
+  FiCalendar,
+  FiPercent,
+  FiType,
+  FiLayers,
+} from "react-icons/fi";
 
 const TIPOS_EVALUACION = [
   { value: "examen", label: "📝 Examen", color: "text-red-400" },
@@ -15,6 +22,16 @@ const TIPOS_EVALUACION = [
   { value: "otro", label: "📌 Otro", color: "text-gray-400" },
 ];
 
+const UNIDADES = [
+  { value: "", label: "Sin unidad" },
+  { value: "Unidad 1", label: "Unidad 1" },
+  { value: "Unidad 2", label: "Unidad 2" },
+  { value: "Unidad 3", label: "Unidad 3" },
+  { value: "Unidad 4", label: "Unidad 4" },
+  { value: "Unidad 5", label: "Unidad 5" },
+  { value: "Unidad 6", label: "Unidad 6" },
+];
+
 const ModalNuevaEvaluacion = ({
   isOpen,
   onClose,
@@ -27,6 +44,7 @@ const ModalNuevaEvaluacion = ({
     materia_id: materiaIdInicial || "",
     nombre: "",
     tipo: "examen",
+    unidad: "",
     porcentaje: "",
     calificacion: "",
     fecha: new Date().toISOString().split("T")[0],
@@ -42,6 +60,7 @@ const ModalNuevaEvaluacion = ({
         materia_id: evaluacionInicial.materia_id,
         nombre: evaluacionInicial.nombre,
         tipo: evaluacionInicial.tipo,
+        unidad: evaluacionInicial.unidad || "",
         porcentaje: evaluacionInicial.porcentaje,
         calificacion: evaluacionInicial.calificacion || "",
         fecha:
@@ -147,9 +166,9 @@ const ModalNuevaEvaluacion = ({
                   className={`w-full bg-[#2a2a2a] border rounded-xl px-4 py-3 text-sm text-white outline-none transition-all ${
                     errors.materia_id
                       ? "border-red-500/50"
-                      : "border-white/5 focus:border-blue-500/50"
+                      : "border-white/5 focus:border-purple-500/50"
                   }`}
-                  disabled={!!materiaIdInicial} // Si viene de una materia específica, no se puede cambiar
+                  disabled={!!materiaIdInicial}
                 >
                   <option value="">Seleccionar materia</option>
                   {materias.map((m) => (
@@ -180,7 +199,7 @@ const ModalNuevaEvaluacion = ({
                   className={`w-full bg-[#2a2a2a] border rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 outline-none transition-all ${
                     errors.nombre
                       ? "border-red-500/50"
-                      : "border-white/5 focus:border-blue-500/50"
+                      : "border-white/5 focus:border-purple-500/50"
                   }`}
                 />
                 {errors.nombre && (
@@ -190,7 +209,7 @@ const ModalNuevaEvaluacion = ({
                 )}
               </div>
 
-              {/* Tipo y Porcentaje en grid */}
+              {/* Tipo y Unidad en grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block">
@@ -201,7 +220,7 @@ const ModalNuevaEvaluacion = ({
                     onChange={(e) =>
                       setFormData({ ...formData, tipo: e.target.value })
                     }
-                    className="w-full bg-[#2a2a2a] border border-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50"
+                    className="w-full bg-[#2a2a2a] border border-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500/50"
                   >
                     {TIPOS_EVALUACION.map((t) => (
                       <option key={t.value} value={t.value}>
@@ -211,6 +230,30 @@ const ModalNuevaEvaluacion = ({
                   </select>
                 </div>
 
+                {/* NUEVO: Campo Unidad */}
+                <div>
+                  <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block flex items-center gap-1">
+                    <FiLayers size={12} />
+                    Unidad
+                  </label>
+                  <select
+                    value={formData.unidad}
+                    onChange={(e) =>
+                      setFormData({ ...formData, unidad: e.target.value })
+                    }
+                    className="w-full bg-[#2a2a2a] border border-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500/50"
+                  >
+                    {UNIDADES.map((u) => (
+                      <option key={u.value} value={u.value}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Porcentaje y Calificación en grid */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block">
                     Porcentaje
@@ -229,7 +272,7 @@ const ModalNuevaEvaluacion = ({
                       className={`w-full bg-[#2a2a2a] border rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 outline-none transition-all ${
                         errors.porcentaje
                           ? "border-red-500/50"
-                          : "border-white/5 focus:border-blue-500/50"
+                          : "border-white/5 focus:border-purple-500/50"
                       }`}
                     />
                     <FiPercent
@@ -243,10 +286,7 @@ const ModalNuevaEvaluacion = ({
                     </p>
                   )}
                 </div>
-              </div>
 
-              {/* Calificación y Fecha en grid */}
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block">
                     Calificación (opcional)
@@ -264,7 +304,7 @@ const ModalNuevaEvaluacion = ({
                     className={`w-full bg-[#2a2a2a] border rounded-xl px-4 py-3 text-sm text-white placeholder:text-gray-700 outline-none transition-all ${
                       errors.calificacion
                         ? "border-red-500/50"
-                        : "border-white/5 focus:border-blue-500/50"
+                        : "border-white/5 focus:border-purple-500/50"
                     }`}
                   />
                   {errors.calificacion && (
@@ -273,25 +313,26 @@ const ModalNuevaEvaluacion = ({
                     </p>
                   )}
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block">
-                    Fecha
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={formData.fecha}
-                      onChange={(e) =>
-                        setFormData({ ...formData, fecha: e.target.value })
-                      }
-                      className="w-full bg-[#2a2a2a] border border-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500/50 [color-scheme:dark]"
-                    />
-                    <FiCalendar
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600"
-                      size={14}
-                    />
-                  </div>
+              {/* Fecha */}
+              <div>
+                <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2 block">
+                  Fecha
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={formData.fecha}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fecha: e.target.value })
+                    }
+                    className="w-full bg-[#2a2a2a] border border-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500/50 [color-scheme:dark]"
+                  />
+                  <FiCalendar
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600"
+                    size={14}
+                  />
                 </div>
               </div>
 
@@ -307,7 +348,7 @@ const ModalNuevaEvaluacion = ({
                 <button
                   type="submit"
                   disabled={guardando}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {guardando ? (
                     <>

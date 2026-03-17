@@ -133,6 +133,7 @@ const initDB = (db) => {
       materia_id INTEGER NOT NULL,
       nombre TEXT NOT NULL,
       tipo TEXT NOT NULL,
+      unidad TEXT,
       porcentaje REAL NOT NULL,
       calificacion REAL,
       fecha DATE,
@@ -151,6 +152,7 @@ const initDB = (db) => {
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_tareas_completada ON tareas(completada)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_proyectos_materia ON proyectos(materia_id)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_proyectos_estado ON proyectos(estado)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_evaluaciones_unidad ON evaluaciones(unidad)`).run();
 
   console.log('✅ Cerebro sincronizado correctamente.');
 };

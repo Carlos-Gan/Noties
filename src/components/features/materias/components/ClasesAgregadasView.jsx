@@ -2,7 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import SeccionProyectos from "../proyectos/SeccionProyectos";
 import MateriaList from "./MateriaList";
-import { FiBook, FiFileText, FiFolder } from "react-icons/fi";
+import { FiBook, FiFileText, FiFolder, FiPieChart } from "react-icons/fi";
+import DashboardEvaluaciones from "../../dashboard/DashboardEvaluaciones";
 
 const ClasesAgregadasView = ({
   materias = [],
@@ -58,6 +59,12 @@ const ClasesAgregadasView = ({
       label: "Proyectos",
       icon: FiFolder,
       count: resumen.proyectos.length,
+    },
+    {
+      id: "evaluaciones",
+      label: "Calificaciones",
+      icon: FiPieChart,
+      count: null,
     },
   ];
 
@@ -189,6 +196,21 @@ const ClasesAgregadasView = ({
               materias={materias}
               filtroMateria={filtroMateria}
               setFiltroMateria={setFiltroMateria}
+            />
+          </motion.div>
+        )}
+
+        {/* Evaluaciones */}
+        {vistaActiva == "evaluaciones" && (
+          <motion.div
+            key="evaluaciones"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <DashboardEvaluaciones
+              materias={materias}
+              onMateriaClick={onMateriaClick}
             />
           </motion.div>
         )}
