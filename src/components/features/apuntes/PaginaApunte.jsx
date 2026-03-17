@@ -1,71 +1,115 @@
-import { useState, useEffect, useCallback } from 'react'
-import EditorApunte from './EditorApunte'
+import { useState, useEffect, useCallback, useRef } from "react";
+import EditorApunte from "./EditorApunte/EditorApunte";
 
 export default function PaginaApunte({ apunteId }) {
-  const [apunte, setApunte] = useState(null)
-  const [guardando, setGuardando] = useState(false)
-  const [timer, setTimer] = useState(null)
+  const [apunte, setApunte] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
-    if (!apunteId) return
-    ipcRenderer.invoke('apuntes:getOne', apunteId).then(data => {
-      setApunte({
-        ...data,
-        contenido: data.contenido ? JSON.parse(data.contenido) : null
-      })
-    })
-  }, [apunteId])
+    if (!apunteId) return;
 
-  // Guardado automático — espera 1.5s después del último cambio
-  const handleCambio = useCallback((nuevoContenido) => {
-    setApunte(prev => ({ ...prev, contenido: nuevoContenido }))
+    const cargarApunte = async () => {
+      try {
+        const data = await window.electronAPI.apuntes.getOne(apunteId);
+        setApunte({
+          ...data,
+          contenido: data.contenido ? JSON.parse(data.contenido) : null,
+        });
+        setError(null);
+      } catch (err) {
+        console.error("Error cargando apunte:", err);
+        setError("No se pudo cargar el apunte");
+      }
+    };
 
-    if (timer) clearTimeout(timer)
-    setGuardando(true)
+    cargarApunte();
+  }, [apunteId]);
 
-    const nuevoTimer = setTimeout(async () => {
-      await window.electron.invoke('apuntes:guardar', {
-        id: apunteId,
-        titulo: apunte?.titulo,
-        contenido: nuevoContenido,
-      })
-      setGuardando(false)
-    }, 1500)
+  const guardarApunte = useCallback(
+    async (nuevoContenido, nuevoTitulo) => {
+      try {
+        await window.electronAPI.apuntes.guardar({
+          id: apunteId,
+          titulo: nuevoTitulo,
+          contenido: nuevoContenido,
+        });
+        setGuardando(false);
+      } catch (err) {
+        console.error("Error guardando apunte:", err);
+        setGuardando(false);
+      }
+    },
+    [apunteId],
+  );
 
-    setTimer(nuevoTimer)
-  }, [apunteId, apunte?.titulo, timer])
+  const handleCambio = useCallback(
+    (nuevoContenido) => {
+      setApunte((prev) => ({ ...prev, contenido: nuevoContenido }));
 
-  if (!apunte) return (
-    <div className="flex items-center justify-center h-full text-white/30">
-      Cargando apunte...
-    </div>
-  )
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setGuardando(true);
+
+      timerRef.current = setTimeout(() => {
+        guardarApunte(nuevoContenido, apunte?.titulo);
+      }, 1500);
+    },
+    [guardarApunte, apunte?.titulo],
+  );
+
+  const handleTituloChange = (e) => {
+    const nuevoTitulo = e.target.value;
+    setApunte((prev) => ({ ...prev, titulo: nuevoTitulo }));
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setGuardando(true);
+
+    timerRef.current = setTimeout(() => {
+      guardarApunte(apunte?.contenido, nuevoTitulo);
+    }, 1500);
+  };
+
+  // Limpiar timer al desmontar
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-red-400">
+        {error}
+      </div>
+    );
+  }
+
+  if (!apunte) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-600">
+        Cargando apunte...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e]">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-white/10">
         <input
-          value={apunte.titulo}
-          onChange={e => setApunte(prev => ({ ...prev, titulo: e.target.value }))}
-          onBlur={() => window.electron.invoke('apuntes:guardar', {
-            id: apunteId,
-            titulo: apunte.titulo,
-            contenido: apunte.contenido,
-          })}
-          className="bg-transparent text-white text-xl font-semibold focus:outline-none w-full"
+          value={apunte.titulo || ""}
+          onChange={handleTituloChange}
+          className="bg-transparent text-white text-xl font-semibold focus:outline-none w-full placeholder:text-gray-700"
           placeholder="Sin título"
         />
         <span className="text-white/30 text-xs ml-4 shrink-0">
-          {guardando ? 'Guardando...' : 'Guardado'}
+          {guardando ? "Guardando..." : "Guardado"}
         </span>
       </div>
 
       {/* Editor */}
-      <EditorApunte
-        contenido={apunte.contenido}
-        onChange={handleCambio}
-      />
+      <EditorApunte contenido={apunte.contenido} onChange={handleCambio} />
     </div>
-  )
+  );
 }

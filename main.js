@@ -96,6 +96,37 @@ ipcMain.handle("export-to-pdf", async (event, title) => {
   }
 });
 
+ipcMain.handle("print-html", async (event, { html, title }) => {
+  const win = new BrowserWindow({ show: false });
+
+  try {
+    await win.loadURL(
+      `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
+    );
+
+    const pdfPath = path.join(app.getPath("documents"), `${title}.pdf`);
+
+    const data = await win.webContents.printToPDF({
+      printBackground: true,
+      pageSize: "A4",
+      margin: {
+        top: "1cm",
+        bottom: "1cm",
+        left: "1cm",
+        right: "1cm",
+      },
+    });
+
+    fs.writeFileSync(pdfPath, data);
+    win.close();
+
+    return { success: true, path: pdfPath };
+  } catch (error) {
+    win.close();
+    return { success: false, error: error.message };
+  }
+});
+
 // --- VENTANA ---
 function createWindow() {
   const win = new BrowserWindow({

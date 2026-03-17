@@ -1,77 +1,110 @@
-# 🧠 Noties Workspace
+# 🧠 Noties Workspace v1.1.5
 
-> **v1.1.0** | Mi "Segundo Cerebro" para la Universidad.
+<div align="center">
 
-**Noties** es una aplicación de escritorio diseñada para estudiantes que buscan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, Noties centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
+![Noties Logo](https://i.imgur.com/7ZQqXxL.png)
 
-🔗 **Repositorio:** [https://github.com/Carlos-Gan/Noties](https://github.com/Carlos-Gan/Noties)
+**Tu segundo cerebro académico - Gestión local, privada y profesional para ingeniería**
 
----
+[![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://github.com/Carlos-Gan/Noties)
+[![Electron](https://img.shields.io/badge/Electron-40.7.0-47848F.svg)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.4-61DAFB.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## ✨ Características v1.0.0 (Lanzamiento Funcional)
-
-Esta versión marca el primer hito estable del proyecto, integrando herramientas avanzadas de edición y gestión académica.
-
-### 📝 Notas y Editor Pro
-
-- **Editor Enriquecido:** Soporte nativo para bloques de código, **imágenes** y renderizado de fórmulas **LaTeX** mediante cadenas de texto (vía KaTeX).
-- **Dashboard de Notas:** Nueva vista centralizada para explorar y gestionar todos los apuntes del semestre de forma organizada.
-- **Exportación a PDF:** Generación de documentos profesionales a partir de tus notas Markdown con un solo clic para entregas formales.
-
-### 📂 Gestión de Clases y Semestres
-
-- **Archivado Automático:** Sistema inteligente que detecta el fin de cursos y archiva materias según tu configuración para mantener el espacio de trabajo limpio.
-- **Centro de Archivo:** Interfaz dedicada para consultar, recuperar o eliminar clases de periodos académicos anteriores.
-
-### 🕹️ Experiencia de Usuario (UX)
-
-- **Navegación por Mouse:** Soporte para botones adicionales del mouse (Back/Forward) para un flujo de navegación fluido entre dashboards.
-- **Kanban Interactivo:** Sistema de _Drag & Drop_ para gestionar el ciclo de vida de tus proyectos (Pendiente, En curso, Entregado).
-- **Visualización Crítica:** Telemetría en el Dashboard principal para identificar tareas urgentes y el avance porcentual global por materia.
+</div>
 
 ---
 
-## 🆕 Novedades v1.1.0
+## 📖 Sobre Noties
 
-Esta actualización se enfoca en mejorar la gestión de horarios y la flexibilidad en la edición de materias sin comprometer la integridad de la base de datos.
+**Noties** es una aplicación de escritorio diseñada para estudiantes que buscan una organización superior. Inspirada en la flexibilidad de **Anytype** y el minimalismo de **Notion**, centraliza tus clases, apuntes en Markdown y el seguimiento de proyectos en una base de datos local, privada y portátil.
 
-### 📅 Gestión de Horarios Inteligente
+> "Construyendo las herramientas que desearía haber tenido el primer día de clases."
 
-- **Horario Multisesión:** Nueva funcionalidad para agregar múltiples bloques de horario (Día, Salón, Inicio/Fin) por materia.
-- **Renderizado de Datos Complejos:** Lógica de visualización optimizada para procesar arrays de objetos JSON, transformando datos crudos en tarjetas visuales claras.
+---
 
-### ✏️ Edición In-Situ y UI
+## ✨ Características Principales
 
-- **Dashboard Editable:** Los metadatos de la materia (Profesor, Links, Estado) ahora son editables mediante doble clic directamente en el Sidebar, eliminando la necesidad de formularios externos.
-- **Sistema de Badges Dinámicos:** Visualización de estados mediante etiquetas con colores inteligentes que responden al contexto de la materia.
-- **Layout Refinado:** Sidebar con contrastes mejorados y tipografía optimizada para lectura rápida de horarios y estadísticas.
+### 📝 Editor Enriquecido Pro
+
+- **Comandos Slash (`/`):** Inserción rápida de bloques.
+- **Bloques de Código:** Resaltado de sintaxis para más de 20 lenguajes.
+- **Matemáticas Avanzadas:** Renderizado de fórmulas **LaTeX** mediante KaTeX.
+- **Exportación a PDF:** Generación de documentos profesionales limpios con un solo clic.
+
+### 📊 Gestión Académica e Inteligente
+
+- **Grade Predictor:** Sistema de proyecciones (pesimista/optimista) basado en unidades y materias.
+- **Horario Multisesión:** Gestión de múltiples bloques (Día, Salón, Hora) con cuenta regresiva para tu próxima clase.
+- **Kanban Interactivo:** Gestión de proyectos mediante _Drag & Drop_ (Pendiente, En curso, Entregado).
+- **Archivado Automático:** Sistema que detecta el fin de cursos para mantener tu espacio de trabajo limpio.
+
+### 🎯 UX & Telemetría
+
+- **Navegación Fluida:** Soporte para botones laterales del mouse (Back/Forward).
+- **Visualización Crítica:** Identificación inmediata de tareas urgentes y avance porcentual global.
+
+---
+
+## 🆕 Novedades en v1.1.5
+
+### 🎨 Mejoras en el Editor
+
+- ✅ Nuevo bloque de código con selector de lenguaje integrado.
+- ✅ Comandos slash optimizados y más rápidos.
+- ✅ Exportación a PDF mejorada (ahora solo exporta el contenido del apunte, eliminando ruido visual).
+
+### 📈 Calificaciones y Unidades
+
+- ✅ Se añadió el parámetro de **Unidad** a las evaluaciones para un control granular.
+- ✅ Alertas de porcentajes excedidos en el Grade Predictor.
+
+### 🔧 Optimización Técnica
+
+- ✅ **Bug Fix:** El bloque de código ya no congela la interfaz.
+- ✅ **Performance:** Optimización en el manejo de timers y sincronización de notas.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend:** React.js + Tailwind CSS + Framer Motion (para animaciones fluidas).
-- **Runtime:** Electron.js (asegurando una experiencia nativa en escritorio).
-- **Base de Datos:** SQLite (vía `better-sqlite3`) para almacenamiento local y persistente.
-- **Procesamiento:** Markdown Engine + KaTeX (para renderizado matemático científico).
+- **Frontend:** React 19 + Tailwind CSS + Framer Motion.
+- **Runtime:** Electron 40 (Experiencia nativa de escritorio).
+- **Base de Datos:** SQLite (vía `better-sqlite3`) con **Esquema Híbrido**:
+  - Tablas relacionales para alto rendimiento.
+  - Metadata JSON extensible para campos personalizados sin migraciones.
+- **Comunicación:** Protocolo IPC seguro para operaciones asíncronas.
 
 ---
 
-## 📄 Arquitectura y Estructura de Datos
+## 🚀 Instalación (Desarrollo)
 
-La aplicación utiliza un enfoque de **Esquema Híbrido** diseñado para la flexibilidad del estudiante de ingeniería:
+```bash
+# 1. Clonar el repositorio
+git clone [https://github.com/Carlos-Gan/Noties.git](https://github.com/Carlos-Gan/Noties.git)
 
-1. **Tablas Relacionales:** Uso de tablas estándar (`materias`, `proyectos`, `apuntes`) para consultas de alto rendimiento, ordenamiento y filtrado SQL tradicional.
-2. **Metadata JSON Extensible:** Implementación de una columna de tipo TEXT para almacenar objetos JSON. Esto permite añadir campos personalizados (como arrays de horarios o enlaces de bibliografía) sin necesidad de realizar migraciones de base de datos o alterar el esquema físico.
-3. **Comunicación IPC Segura:** Protocolo de comunicación asíncrona entre el proceso de renderizado y el proceso principal (Main) de Electron, garantizando que el acceso a archivos y base de datos no bloquee la interfaz de usuario.
+# 2. Instalar dependencias
+npm install
 
+# 3. Reconstruir módulos nativos (SQLite)
+npm run rebuild
+
+# 4. Correr en modo dev
+npm run start
 ---
+```
 
 ## 👤 Autor
 
-**Carlos-Gandara** - _Desarrollador y Estudiante de Ingeniería en Sistemas_
+**Carlos-Gandara** - _Desarrollador y Estudiante_
 
 > "Construyendo las herramientas que desearía haber tenido el primer día de clases."
 
 # Cosas agregadas
+
 - Se agrego Unidad a los parametros de evaluaciones
+- Mejora al exportar el apunte a pdf
+- Arreglo de bugs
+- Optimizacion en las notas
+
+<sub>© 2026 Noties Workspace - Licencia MIT</sub>

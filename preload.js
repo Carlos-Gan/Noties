@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   checkDB: () => ipcRenderer.invoke("check-db-status"),
 
   // Exportación
-  exportPDF: (title) => ipcRenderer.invoke("export-to-pdf", title),
+  printHTML: (options) => ipcRenderer.invoke("print-html", options),
 
   // Vault Management (para tu WelcomePage)
   selectVault: () => ipcRenderer.invoke("select-vault"),

@@ -192,3 +192,26 @@
   right: -6px;
   cursor: nwse-resize;
 }
+
+/* En tu archivo CSS global */
+.language-selector-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.language-selector-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.language-selector-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.language-selector-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+}
+
+.language-selector-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
