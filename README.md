@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![Noties Logo](https://i.imgur.com/7ZQqXxL.png)
-
 **Tu segundo cerebro académico - Gestión local, privada y profesional para ingeniería**
 
 [![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://github.com/Carlos-Gan/Noties)
